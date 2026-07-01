@@ -119,9 +119,6 @@ body{
 /* ── QUESTION ── */
 .q-num{font-size:12px;color:var(--text-dim);margin-bottom:6px;font-weight:500;}
 .question-text{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;line-height:1.5;color:var(--text);margin-bottom:8px;}
-.wiki-source{font-size:12px;color:var(--text-dim);margin-bottom:22px;}
-.wiki-source a{color:var(--gold);text-decoration:none;}
-.wiki-source a:hover{text-decoration:underline;}
 .options{display:flex;flex-direction:column;gap:9px;}
 .option-btn{
   background:var(--surface2);border:1.5px solid var(--border);
@@ -447,7 +444,7 @@ const LANGS = {
     loading:'Generating today\'s questions from Wikipedia…',
     questionOf:(n,t)=>`Question ${n} of ${t}`,
     nextQ:'Next Question →', seeResults:'See Results →',
-    wikiLabel:'Wikipedia:', readMore:'Read more on Wikipedia ↗',
+    readMore:'Read more on Wikipedia ↗',
     correct:'Correct', wrong:'Wrong', correctAnswers:'correct answers',
     verdicts:[
       ['Perfect Expedition',   'A flawless run — the atlas bows to you.'],
@@ -476,7 +473,7 @@ const LANGS = {
     loading:'விக்கிப்பீடியாவிலிருந்து கேள்விகள் உருவாக்கப்படுகின்றன…',
     questionOf:(n,t)=>`கேள்வி ${n} / ${t}`,
     nextQ:'அடுத்த கேள்வி →', seeResults:'முடிவுகளை காண →',
-    wikiLabel:'விக்கிப்பீடியா:', readMore:'விக்கிப்பீடியாவில் மேலும் படிக்க ↗',
+    readMore:'விக்கிப்பீடியாவில் மேலும் படிக்க ↗',
     correct:'சரி', wrong:'தவறு', correctAnswers:'சரியான பதில்கள்',
     verdicts:[
       ['சிறந்த பயணம்',       'தவறே இல்லாத ஓட்டம் — அட்லஸ் உங்களை வணங்குகிறது.'],
@@ -505,7 +502,7 @@ const LANGS = {
     loading:'Wikipedia से प्रश्न बनाए जा रहे हैं…',
     questionOf:(n,t)=>`प्रश्न ${n} / ${t}`,
     nextQ:'अगला प्रश्न →', seeResults:'परिणाम देखें →',
-    wikiLabel:'Wikipedia:', readMore:'Wikipedia पर और पढ़ें ↗',
+    readMore:'Wikipedia पर और पढ़ें ↗',
     correct:'सही', wrong:'गलत', correctAnswers:'सही उत्तर',
     verdicts:[
       ['पूर्ण अभियान',     'बेदाग दौड़ — एटलस आपको नमन करता है।'],
@@ -534,7 +531,7 @@ const LANGS = {
     loading:'Wikipedia থেকে প্রশ্ন তৈরি হচ্ছে…',
     questionOf:(n,t)=>`প্রশ্ন ${n} / ${t}`,
     nextQ:'পরের প্রশ্ন →', seeResults:'ফলাফল দেখুন →',
-    wikiLabel:'Wikipedia:', readMore:'Wikipedia-তে আরও পড়ুন ↗',
+    readMore:'Wikipedia-তে আরও পড়ুন ↗',
     correct:'সঠিক', wrong:'ভুল', correctAnswers:'সঠিক উত্তর',
     verdicts:[
       ['নিখুঁত অভিযান',    'ত্রুটিহীন — মানচিত্র আপনাকে সালাম জানায়।'],
@@ -563,7 +560,7 @@ const LANGS = {
     loading:'Wikipedia ನಿಂದ ಪ್ರಶ್ನೆಗಳನ್ನು ರಚಿಸಲಾಗುತ್ತಿದೆ…',
     questionOf:(n,t)=>`ಪ್ರಶ್ನೆ ${n} / ${t}`,
     nextQ:'ಮುಂದಿನ ಪ್ರಶ್ನೆ →', seeResults:'ಫಲಿತಾಂಶ ನೋಡಿ →',
-    wikiLabel:'Wikipedia:', readMore:'Wikipedia ನಲ್ಲಿ ಮತ್ತಷ್ಟು ಓದಿ ↗',
+    readMore:'Wikipedia ನಲ್ಲಿ ಮತ್ತಷ್ಟು ಓದಿ ↗',
     correct:'ಸರಿ', wrong:'ತಪ್ಪು', correctAnswers:'ಸರಿಯಾದ ಉತ್ತರಗಳು',
     verdicts:[
       ['ಸಂಪೂರ್ಣ ಅಭಿಯಾನ',   'ನಿರ್ದೋಷ ಓಟ — ಅಟ್ಲಾಸ್ ನಿಮಗೆ ನಮಸ್ಕರಿಸುತ್ತದೆ.'],
@@ -592,7 +589,7 @@ const LANGS = {
     loading:'Wikipediaから問題を生成中…',
     questionOf:(n,t)=>`問題 ${n} / ${t}`,
     nextQ:'次の問題 →', seeResults:'結果を見る →',
-    wikiLabel:'Wikipedia:', readMore:'Wikipediaでもっと読む ↗',
+    readMore:'Wikipediaでもっと読む ↗',
     correct:'正解', wrong:'不正解', correctAnswers:'正解数',
     verdicts:[
       ['完璧な遠征',     'ミスなし — アトラスはあなたに敬意を表します。'],
@@ -820,10 +817,6 @@ function renderQuestion(q, idx) {
     <div class="tag">${q.category}</div>
     <div class="q-num">${t().questionOf(idx+1, dailyQuestions.length)}</div>
     <div class="question-text">${q.question}</div>
-    <div class="wiki-source">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px;color:var(--gold);opacity:0.7"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-      ${t().wikiLabel} <a href="${wikiUrl}" target="_blank" rel="noopener">${q.wiki_topic} ↗</a>
-    </div>
     <div class="options">${opts}</div>
     <div class="explanation" id="explanation">
       <div style="margin-bottom:10px;">${q.explanation} <a href="${wikiUrl}" target="_blank" rel="noopener" style="color:var(--gold);font-style:normal;font-size:13px;white-space:nowrap;">${t().readMore}</a></div>
