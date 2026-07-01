@@ -405,6 +405,13 @@ export default {
           const countKey = `player_count:${todayUTC()}`;
           const current = parseInt(await env.TRIVIA_KV.get(countKey) || '0');
           if (current >= 50000) {
+            // Log once per day so it's visible in Cloudflare Worker Logs / `wrangler tail`,
+            // without spamming a log line on every request for the rest of the day.
+            const alertKey = `circuit_breaker_alerted:${todayUTC()}`;
+            if (!(await env.TRIVIA_KV.get(alertKey))) {
+              console.warn(`Circuit breaker tripped: ${current} cache-miss invocations today (${todayUTC()})`);
+              ctx.waitUntil(env.TRIVIA_KV.put(alertKey, '1', { expirationTtl: 48 * 3600 }));
+            }
             return json({ error: "Carta is having an incredibly popular day — we've hit today's limit. Come back tomorrow!" }, 503);
           }
           await env.TRIVIA_KV.put(countKey, String(current + 1), { expirationTtl: 48 * 3600 });
