@@ -1,0 +1,14 @@
+{
+  "name": "okapia-trivia",
+  "version": "1.0.0",
+  "description": "Okapia Games Daily Atlas Trivia — Cloudflare Worker",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "npm run build && npx wrangler dev dist/worker.js",
+    "deploy": "npm run build && npx wrangler deploy dist/worker.js"
+  },
+  "devDependencies": {
+    "wrangler": "^4.86.0"
+  }
+}
