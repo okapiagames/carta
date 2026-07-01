@@ -11,6 +11,12 @@ routes = [{ pattern = "carta.okapiagames.com/*", zone_name = "okapiagames.com" }
 binding = "TRIVIA_KV"
 id = "e3cfeee425ca4e2b94c72028d1353ceb"
 
+# R2 bucket for shared postcards — strongly consistent reads, unlike KV,
+# so WhatsApp/Twitter link-preview crawlers don't race a freshly uploaded image.
+[[r2_buckets]]
+binding = "POSTCARDS"
+bucket_name = "carta-postcards"
+
 # Set ANTHROPIC_API_KEY via: npx wrangler secret put ANTHROPIC_API_KEY
 # Never put secrets in wrangler.toml
 

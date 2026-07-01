@@ -428,13 +428,17 @@ export default {
       });
     }
 
-    // POST /api/share — upload postcard PNG, store in KV, return public share URL
+    // POST /api/share — upload postcard PNG, store in R2, return public share URL
+    // (R2 gives strongly-consistent reads, so a WhatsApp/Twitter crawler hitting
+    // /img/:id.png moments later never races an eventually-consistent KV write.)
     if (path === '/api/share' && request.method === 'POST') {
       try {
         const buf = await request.arrayBuffer();
         if (buf.byteLength > 3 * 1024 * 1024) return json({ error: 'Too large' }, 400);
         const id = crypto.randomUUID().slice(0, 12);
-        await env.TRIVIA_KV.put(`postcard:${id}`, buf, { expirationTtl: 86400 });
+        await env.POSTCARDS.put(`postcard:${id}`, buf, {
+          httpMetadata: { contentType: 'image/png' },
+        });
         const origin = new URL(request.url).origin;
         return json({ url: `${origin}/share/${id}` });
       } catch (e) {
@@ -442,12 +446,12 @@ export default {
       }
     }
 
-    // GET /img/:id.png — serve stored postcard PNG (used by OG share page)
-    if (path.startsWith('/img/') && path.endsWith('.png') && request.method === 'GET') {
+    // GET/HEAD /img/:id.png — serve stored postcard PNG (used by OG share page)
+    if (path.startsWith('/img/') && path.endsWith('.png') && (request.method === 'GET' || request.method === 'HEAD')) {
       const id = path.slice(5, -4);
-      const buf = await env.TRIVIA_KV.get(`postcard:${id}`, 'arrayBuffer');
-      if (!buf) return new Response('Not found', { status: 404 });
-      return new Response(buf, {
+      const obj = await env.POSTCARDS.get(`postcard:${id}`);
+      if (!obj) return new Response('Not found', { status: 404 });
+      return new Response(obj.body, {
         headers: {
           'Content-Type': 'image/png',
           'Cache-Control': 'public, max-age=86400',
