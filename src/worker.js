@@ -15,18 +15,175 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-const TOPICS = [
-  { label: "History",    prompt: "ancient civilizations, world wars, empires, historical events, famous rulers" },
-  { label: "Geography",  prompt: "countries, capitals, rivers, mountains, continents, oceans, landmarks" },
-  { label: "History",    prompt: "medieval history, revolutions, exploration, colonialism, treaties, dynasties" },
-  { label: "Geography",  prompt: "natural wonders, island nations, deserts, climate zones, world cities" },
-  { label: "History",    prompt: "Indian history, Asian empires, African kingdoms, pre-colonial civilizations" },
-  { label: "Geography",  prompt: "flags, currencies, time zones, world heritage sites, straits and seas" },
-  { label: "History",    prompt: "20th century events, Cold War, independence movements, political history" },
-  { label: "Geography",  prompt: "African geography, river basins, mountain ranges, tectonic features, lakes" },
-  { label: "History",    prompt: "ancient trade routes, Silk Road, maritime exploration, contact between civilizations" },
-  { label: "Geography",  prompt: "borders, disputed territories, historical boundary changes, geopolitics" },
+// User-Agent required by Wikimedia's API etiquette — requests without one get rate-limited.
+const WIKI_UA = 'Carta/1.0 (carta@okapiagames.com)';
+
+// Titles that are never valid question seeds (list/index/meta pages, not articles).
+const EXCLUDED_TITLE_PREFIXES = ['List of', 'Timeline of', 'Index of', 'Wikipedia:', 'Category:', 'Template:', 'File:'];
+
+// ── Category pool for Wikipedia article sourcing ─────────────────────────────
+// Weights deliberately counteract Wikipedia's own coverage bias (which massively
+// overrepresents the US, UK, and Western Europe). Do not rebalance these —
+// they're an intentional editorial choice, not a bug.
+const CATEGORY_POOL = [
+  // South Asia (~32)
+  { cat: 'Chola dynasty',                region: 'South Asia', type: 'History',   weight: 4 },
+  { cat: 'Maurya Empire',                region: 'South Asia', type: 'History',   weight: 4 },
+  { cat: 'Mughal Empire',                region: 'South Asia', type: 'History',   weight: 4 },
+  { cat: 'Gupta Empire',                 region: 'South Asia', type: 'History',   weight: 3 },
+  { cat: 'Vijayanagara Empire',          region: 'South Asia', type: 'History',   weight: 3 },
+  { cat: 'Indus Valley Civilisation',    region: 'South Asia', type: 'History',   weight: 3 },
+  { cat: 'Geography of India',           region: 'South Asia', type: 'Geography', weight: 3 },
+  { cat: 'Rivers of India',              region: 'South Asia', type: 'Geography', weight: 2 },
+  { cat: 'Mountains of India',           region: 'South Asia', type: 'Geography', weight: 2 },
+  { cat: 'World Heritage Sites in India',region: 'South Asia', type: 'Geography', weight: 4 },
+
+  // Africa (~28)
+  { cat: 'Mali Empire',                  region: 'Africa', type: 'History',   weight: 4 },
+  { cat: 'Kingdom of Kush',              region: 'Africa', type: 'History',   weight: 4 },
+  { cat: 'Ethiopian Empire',             region: 'Africa', type: 'History',   weight: 3 },
+  { cat: 'Ancient Egypt',                region: 'Africa', type: 'History',   weight: 4 },
+  { cat: 'Swahili people',               region: 'Africa', type: 'History',   weight: 3 },
+  { cat: 'Great Zimbabwe',               region: 'Africa', type: 'History',   weight: 3 },
+  { cat: 'Geography of Africa',          region: 'Africa', type: 'Geography', weight: 2 },
+  { cat: 'Rivers of Africa',             region: 'Africa', type: 'Geography', weight: 2 },
+  { cat: 'Mountains of Africa',          region: 'Africa', type: 'Geography', weight: 1 },
+  { cat: 'World Heritage Sites in Africa',region: 'Africa', type: 'Geography', weight: 2 },
+
+  // MENA (~21)
+  { cat: 'Islamic Golden Age',           region: 'MENA', type: 'History',   weight: 4 },
+  { cat: 'Achaemenid Empire',            region: 'MENA', type: 'History',   weight: 3 },
+  { cat: 'Ottoman Empire',               region: 'MENA', type: 'History',   weight: 3 },
+  { cat: 'Abbasid Caliphate',            region: 'MENA', type: 'History',   weight: 3 },
+  { cat: 'Geography of the Middle East', region: 'MENA', type: 'Geography', weight: 3 },
+  { cat: 'Rivers of Iran',               region: 'MENA', type: 'Geography', weight: 3 },
+  { cat: 'World Heritage Sites in Iran', region: 'MENA', type: 'Geography', weight: 2 },
+
+  // SE Asia (~19)
+  { cat: 'Khmer Empire',                 region: 'SE Asia', type: 'History',   weight: 4 },
+  { cat: 'Majapahit',                    region: 'SE Asia', type: 'History',   weight: 3 },
+  { cat: 'Srivijaya',                    region: 'SE Asia', type: 'History',   weight: 3 },
+  { cat: 'Geography of Southeast Asia',  region: 'SE Asia', type: 'Geography', weight: 3 },
+  { cat: 'Mekong',                       region: 'SE Asia', type: 'Geography', weight: 3 },
+  { cat: 'World Heritage Sites in Indonesia', region: 'SE Asia', type: 'Geography', weight: 3 },
+
+  // East/Central Asia (~18)
+  { cat: 'Tang dynasty',                 region: 'East/Central Asia', type: 'History',   weight: 3 },
+  { cat: 'Song dynasty',                 region: 'East/Central Asia', type: 'History',   weight: 3 },
+  { cat: 'Mongol Empire',                region: 'East/Central Asia', type: 'History',   weight: 4 },
+  { cat: 'Geography of East Asia',       region: 'East/Central Asia', type: 'Geography', weight: 2 },
+  { cat: 'Geography of Central Asia',    region: 'East/Central Asia', type: 'Geography', weight: 2 },
+  { cat: 'Tian Shan',                    region: 'East/Central Asia', type: 'Geography', weight: 2 },
+  { cat: 'Rivers of Asia',               region: 'East/Central Asia', type: 'Geography', weight: 2 },
+
+  // Americas (~16)
+  { cat: 'Inca Empire',                  region: 'Americas', type: 'History',   weight: 3 },
+  { cat: 'Maya peoples',                 region: 'Americas', type: 'History',   weight: 3 },
+  { cat: 'Aztec Empire',                 region: 'Americas', type: 'History',   weight: 3 },
+  { cat: 'Geography of South America',   region: 'Americas', type: 'Geography', weight: 2 },
+  { cat: 'Geography of Central America', region: 'Americas', type: 'Geography', weight: 2 },
+  { cat: 'Andes',                        region: 'Americas', type: 'Geography', weight: 2 },
+  { cat: 'Amazon River',                 region: 'Americas', type: 'Geography', weight: 1 },
+
+  // Global Geography (~14) — no regional bias
+  { cat: 'Mountain ranges',              region: 'Global Geography', type: 'Geography', weight: 3 },
+  { cat: 'International straits',        region: 'Global Geography', type: 'Geography', weight: 3 },
+  { cat: 'World Heritage Sites',         region: 'Global Geography', type: 'Geography', weight: 4 },
+  { cat: 'Oceans',                       region: 'Global Geography', type: 'Geography', weight: 4 },
+
+  // Oceania (~7)
+  { cat: 'History of Polynesia',         region: 'Oceania', type: 'History',   weight: 2 },
+  { cat: 'Māori culture',                region: 'Oceania', type: 'History',   weight: 2 },
+  { cat: 'Geography of Oceania',         region: 'Oceania', type: 'Geography', weight: 3 },
+
+  // Europe (~5) — Byzantine, Rome, Greece only
+  { cat: 'Byzantine Empire',             region: 'Europe', type: 'History', weight: 2 },
+  { cat: 'Roman Empire',                 region: 'Europe', type: 'History', weight: 2 },
+  { cat: 'Ancient Greece',               region: 'Europe', type: 'History', weight: 1 },
 ];
+
+// ── Daily rotating thread, seeded by date so it's the same for all players all day ──
+const DAILY_THREADS = [
+  "trade and the movement of goods, ideas, and people across the world",
+  "the relationship between water — rivers, seas, monsoons — and human civilisation",
+  "how things get their names — places, animals, inventions, scientific discoveries",
+  "the history of food — where it came from, how it travelled, what it changed",
+  "surprising firsts — the first time something happened anywhere in the world",
+  "the connections between science, art, and power across different civilisations",
+  "migration, diaspora, and how peoples have moved and reshaped the world",
+  "the lives of ordinary people — not kings, but farmers, traders, sailors, weavers",
+  "numbers that changed history — populations, distances, dates, quantities",
+  "animals in human history — beasts of burden, sacred creatures, ecological shifts",
+];
+
+function pickDailyThread(date) {
+  const idx = parseInt(date.replace(/-/g, ''), 10) % DAILY_THREADS.length;
+  return DAILY_THREADS[idx];
+}
+
+// ── Question slots — 3 accessible (Q1-3), 7 challenging (Q4-10) ──────────────
+const TOPIC_SLOTS = [
+  { label: 'History',   difficulty: 'accessible'  },
+  { label: 'Geography', difficulty: 'accessible'  },
+  { label: 'History',   difficulty: 'accessible'  },
+  { label: 'Geography', difficulty: 'challenging' },
+  { label: 'History',   difficulty: 'challenging' },
+  { label: 'Geography', difficulty: 'challenging' },
+  { label: 'History',   difficulty: 'challenging' },
+  { label: 'Geography', difficulty: 'challenging' },
+  { label: 'History',   difficulty: 'challenging' },
+  { label: 'Geography', difficulty: 'challenging' },
+];
+
+const PERSONA = `You are an erudite, egalitarian scholar with the boundless curiosity of an
+eight-year-old encountering the world for the first time. You delight in the
+unexpected, the overlooked, and the delightfully obscure. You want everyone
+at the table to feel the joy of knowing something.
+
+Your questions span the full breadth of human civilisation — Chola dynasty,
+Roman Empire, Ibn Battuta, Indus Valley, all equal. You actively resist the
+gravitational pull of Western-centric history.
+
+You write in the spirit of the Hindu newspaper's Sunday quiz and the best
+moments of Stephen Fry hosting QI — warm, witty, occasionally surprising
+yourself, never smug. A good question makes someone say "oh, I didn't know
+THAT" even when they get it right.`;
+
+const ANSWER_OPTION_RULES = `ANSWER OPTIONS — four distinct types:
+1. The correct answer — unambiguously right, verifiable.
+2. The tempting wrong answer — something a well-read person might
+   confidently guess, but is wrong.
+3. The plausible but unlikely — fits the category, feels possible,
+   probably wrong.
+4. The red herring — oddly specific and confident-sounding, but wrong.
+
+No obviously absurd options. No joke answers. Options must be
+meaningfully different from each other — not just variations with
+different numbers.`;
+
+const EXPLANATION_RULES = `EXPLANATION: 2-3 sentences adding something the question didn't contain.
+A footnote from a brilliant book — the kind of detail that makes you want
+to read more. Light wit if it fits naturally. Never forced.`;
+
+const ACCURACY_RULES = `ACCURACY:
+- Every question must be based on a well-established fact with a dedicated
+  Wikipedia article.
+- wiki_topic must be the exact Wikipedia article title provided — do not
+  invent or substitute.
+- Do not invent dates, names, or statistics. If uncertain about a fact
+  from the article, base the question on something you are certain of.
+- The correct answer must be unambiguously correct — not a matter of
+  active scholarly debate.`;
+
+const ACCESSIBLE_DIFFICULTY = `This should be one of the more accessible questions — something
+a curious adult with reasonable general knowledge would likely get right.
+Still interesting, not trivial.`;
+
+const CHALLENGING_DIFFICULTY = `This should be genuinely challenging — requiring real knowledge,
+careful reasoning, or familiarity with history beyond the standard Western
+curriculum.`;
+
+const EXAMPLE_QUESTION = { question: "The city of Samarkand sat at the heart of which ancient trade network connecting China to the Mediterranean?", options: ["A. The Amber Road", "B. The Silk Road", "C. The Incense Route", "D. The Royal Road of Persia"], correct: 1, explanation: "Samarkand was one of the great crossroads of the Silk Road. Alexander the Great, upon conquering it, reportedly said it was more beautiful than he had ever imagined.", wiki_topic: "Silk Road", category: "History" };
 
 function todayUTC() {
   return new Date().toISOString().split('T')[0];
@@ -52,37 +209,163 @@ function hasAnswerLeak(q) {
   return hits >= Math.ceil(words.length * 0.6);
 }
 
-// ── Fetch recent wiki_topics to avoid repeats ────────────────────────────────
-async function getRecentTopics(env) {
-  const topics = new Set();
-  const today = new Date();
-  await Promise.all(
-    Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(today);
-      d.setUTCDate(d.getUTCDate() - (i + 1));
-      return env.TRIVIA_KV.get(`questions:${d.toISOString().split('T')[0]}`, 'json').then(cached => {
-        if (cached?.questions) cached.questions.forEach(q => topics.add(q.wiki_topic.toLowerCase()));
-      });
-    })
-  );
-  return topics;
+// ── Layer 3: cross-day deduplication via KV `used_topics` ────────────────────
+async function getUsedTopics(env) {
+  const topics = await env.TRIVIA_KV.get('used_topics', 'json');
+  return new Set((topics || []).map(t => t.toLowerCase()));
 }
 
-// ── Generate one question via Anthropic ──────────────────────────────────────
-async function generateQuestion(topicIdx, apiKey, recentTopics = new Set()) {
-  const t = TOPICS[topicIdx];
-  const avoidClause = recentTopics.size > 0
-    ? `\nDo NOT use any of these Wikipedia topics — they were used in the last 7 days: ${[...recentTopics].join(', ')}.`
-    : '';
+async function saveUsedTopics(env, newTitles) {
+  const existing = (await env.TRIVIA_KV.get('used_topics', 'json')) || [];
+  const combined = [...existing, ...newTitles].slice(-140);
+  await env.TRIVIA_KV.put('used_topics', JSON.stringify(combined), { expirationTtl: 15 * 86400 });
+}
 
-  const prompt = `Generate a challenging but fair multiple-choice trivia question about: ${t.prompt}.
-Base it on a real, specific Wikipedia-worthy fact.${avoidClause}
-Return ONLY valid compact JSON (no markdown, no extra text):
-{"question":"...","options":["A. ...","B. ...","C. ...","D. ..."],"correct":0,"explanation":"1-2 sentence explanation of the correct answer.","wiki_topic":"Wikipedia article title","category":"${t.label}"}
-Rules:
-- "correct" is the 0-based index. All 4 options must be plausible. Be specific and factual. No trivially easy questions.
-- The correct answer must NOT appear in the question text. Do not include the name of the correct answer — or any term that uniquely identifies it — within the question itself.`;
+// ── Weighted random pick from a category pool slice ──────────────────────────
+function weightedPick(pool) {
+  const total = pool.reduce((sum, c) => sum + c.weight, 0);
+  let r = Math.random() * total;
+  for (const c of pool) {
+    r -= c.weight;
+    if (r <= 0) return c;
+  }
+  return pool[pool.length - 1];
+}
 
+// ── Layer 1: fetch a category's member titles, cached in KV for 7 days ───────
+async function fetchCategoryMembers(env, categoryName) {
+  const kvKey = `catmembers:${categoryName.replace(/\s+/g, '_')}`;
+  const cached = await env.TRIVIA_KV.get(kvKey, 'json');
+  if (cached) return cached;
+
+  try {
+    const url = `https://en.wikipedia.org/w/api.php?action=query&list=categorymembers&cmtitle=${encodeURIComponent('Category:' + categoryName)}&cmlimit=500&cmtype=page&format=json`;
+    const res = await fetch(url, { headers: { 'User-Agent': WIKI_UA } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const titles = (data.query?.categorymembers || [])
+      .map(m => m.title)
+      .filter(title => !EXCLUDED_TITLE_PREFIXES.some(p => title.startsWith(p)));
+    await env.TRIVIA_KV.put(kvKey, JSON.stringify(titles), { expirationTtl: 7 * 86400 });
+    return titles;
+  } catch {
+    return [];
+  }
+}
+
+// ── Fetch + validate a single article summary ─────────────────────────────────
+async function fetchArticleSummary(title) {
+  if (EXCLUDED_TITLE_PREFIXES.some(p => title.startsWith(p))) return null;
+  try {
+    const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`, {
+      headers: { 'User-Agent': WIKI_UA },
+    });
+    if (!res.ok) return null;
+    const page = await res.json();
+    if (page.type !== 'standard') return null;
+    if (!page.extract || page.extract.length < 150) return null;
+    return { title: page.title, summary: page.extract.slice(0, 500) };
+  } catch {
+    return null;
+  }
+}
+
+// Fallback when the category API is blocked or a category is exhausted/empty.
+async function fetchRandomArticle() {
+  try {
+    const res = await fetch('https://en.wikipedia.org/api/rest_v1/page/random/summary', {
+      headers: { 'User-Agent': WIKI_UA },
+    });
+    if (!res.ok) return null;
+    const page = await res.json();
+    if (page.type !== 'standard') return null;
+    if (!page.extract || page.extract.length < 150) return null;
+    if (EXCLUDED_TITLE_PREFIXES.some(p => page.title.startsWith(p))) return null;
+    return { title: page.title, summary: page.extract.slice(0, 500) };
+  } catch {
+    return null;
+  }
+}
+
+// ── Layers 1-3 combined: pick one article to seed a given slot type ──────────
+async function pickArticleForSlot(env, type, usedTopics, usedInBatch) {
+  const pool = CATEGORY_POOL.filter(c => c.type === type);
+  const triedCategories = new Set();
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const available = pool.filter(c => !triedCategories.has(c.cat));
+    if (available.length === 0) break;
+    const category = weightedPick(available);
+    triedCategories.add(category.cat);
+
+    const members = await fetchCategoryMembers(env, category.cat);
+    if (!members.length) continue;
+
+    // Filter out recently-used topics; never fail generation because of dedup —
+    // fall back to the full unfiltered list if everything in this category is used up.
+    let candidates = members.filter(t => !usedTopics.has(t.toLowerCase()) && !usedInBatch.has(t.toLowerCase()));
+    if (!candidates.length) candidates = members.filter(t => !usedInBatch.has(t.toLowerCase()));
+    if (!candidates.length) candidates = members;
+
+    const shuffled = [...candidates].sort(() => Math.random() - 0.5).slice(0, 3);
+    for (const title of shuffled) {
+      const article = await fetchArticleSummary(title);
+      if (article) return { title: article.title, summary: article.summary, region: category.region, type };
+    }
+  }
+
+  // Category API blocked/empty for every attempted category — fall back to random summary.
+  for (let i = 0; i < 5; i++) {
+    const random = await fetchRandomArticle();
+    if (random && !usedTopics.has(random.title.toLowerCase()) && !usedInBatch.has(random.title.toLowerCase())) {
+      return { title: random.title, summary: random.summary, region: 'Global', type };
+    }
+  }
+  throw new Error(`Could not source a Wikipedia article for slot type ${type}`);
+}
+
+// ── Layer 4: assemble the single batch prompt ─────────────────────────────────
+function buildBatchPrompt(articles, thread) {
+  const articleBlock = articles
+    .map((a, i) => `${i + 1}. [${a.region}] "${a.title}" — ${a.summary}`)
+    .join('\n\n');
+
+  const slotBlock = TOPIC_SLOTS
+    .map((slot, i) => {
+      const note = slot.difficulty === 'accessible'
+        ? 'most educated adults would get this right'
+        : 'requires real knowledge beyond the standard Western curriculum';
+      return `Q${i + 1}: Category=${slot.label}, Difficulty=${slot.difficulty} (${note}), Region=${articles[i].region}, Article="${articles[i].title}"`;
+    })
+    .join('\n');
+
+  return `${PERSONA}
+
+TODAY'S THREAD: "${thread}" — connect to this naturally, not forced.
+
+ARTICLES (numbered, matching the question slots below):
+${articleBlock}
+
+QUESTION SLOTS:
+${slotBlock}
+
+${ANSWER_OPTION_RULES}
+
+${EXPLANATION_RULES}
+
+${ACCURACY_RULES}
+
+DIFFICULTY:
+Accessible — ${ACCESSIBLE_DIFFICULTY}
+Challenging — ${CHALLENGING_DIFFICULTY}
+
+EXAMPLE QUESTION (tone and format only — do not reuse this content):
+${JSON.stringify(EXAMPLE_QUESTION)}
+
+Return a JSON array of exactly 10 question objects, in the same order as the slots above, each shaped like the example, with "wiki_topic" set to the exact article title given for that slot. No markdown, no preamble, no trailing commentary — output ONLY the JSON array.`;
+}
+
+async function callHaikuBatch(prompt, apiKey) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -92,13 +375,68 @@ Rules:
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 600,
+      max_tokens: 4000,
       messages: [{ role: 'user', content: prompt }],
     }),
   });
   const data = await res.json();
   const raw = data.content[0].text.replace(/```json|```/g, '').trim();
-  return JSON.parse(raw);
+  const parsed = JSON.parse(raw);
+  if (!Array.isArray(parsed)) throw new Error('Expected a JSON array of questions');
+  return parsed;
+}
+
+function isValidQuestion(q) {
+  return !!q
+    && typeof q.question === 'string' && q.question.length > 0
+    && Array.isArray(q.options) && q.options.length === 4
+    && Number.isInteger(q.correct) && q.correct >= 0 && q.correct <= 3
+    && typeof q.explanation === 'string' && q.explanation.length > 0
+    && typeof q.wiki_topic === 'string' && q.wiki_topic.length > 0;
+}
+
+// ── Orchestrate layers 1-4: source 10 articles, batch-generate, validate ─────
+// Sources all 10 slots concurrently (each pick is a handful of sequential Wikipedia
+// fetches, so doing this slot-by-slot would take 10x as long). A concurrent pick can't
+// see its siblings' choices, so any accidental duplicate titles are re-picked afterward.
+async function pickArticlesForSlots(env, usedTopics) {
+  const noSiblings = new Set();
+  const articles = await Promise.all(
+    TOPIC_SLOTS.map(slot => pickArticleForSlot(env, slot.label, usedTopics, noSiblings))
+  );
+
+  const seen = new Set();
+  for (let i = 0; i < articles.length; i++) {
+    const key = articles[i].title.toLowerCase();
+    if (seen.has(key)) {
+      articles[i] = await pickArticleForSlot(env, TOPIC_SLOTS[i].label, usedTopics, seen);
+    }
+    seen.add(articles[i].title.toLowerCase());
+  }
+  return articles;
+}
+
+async function generateDailyBatch(env, date) {
+  const thread = pickDailyThread(date);
+  const usedTopics = await getUsedTopics(env);
+
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const articles = await pickArticlesForSlots(env, usedTopics);
+      const prompt = buildBatchPrompt(articles, thread);
+      const questions = await callHaikuBatch(prompt, env.ANTHROPIC_API_KEY);
+      const valid = questions.filter(isValidQuestion).filter(q => !hasAnswerLeak(q));
+
+      if (valid.length < 8) throw new Error(`Only ${valid.length}/10 questions passed validation`);
+
+      await saveUsedTopics(env, valid.map(q => q.wiki_topic));
+      return { questions: valid, thread };
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  throw new Error(`Question generation failed after retry: ${lastError?.message}`);
 }
 
 // ── Fetch a CC-licensed image from Wikimedia for a topic ─────────────────────
@@ -217,24 +555,8 @@ async function getDailyQuestions(env) {
   await env.TRIVIA_KV.put(lockKey, '1', { expirationTtl: 90 });
 
   try {
-    // Fetch recent topics to avoid repeats, then generate all 10 in parallel
-    const recentTopics = await getRecentTopics(env);
-
-    const questions = await Promise.all(
-      TOPICS.map((_, i) =>
-        new Promise(resolve =>
-          setTimeout(async () => {
-            try { resolve(await generateQuestion(i, env.ANTHROPIC_API_KEY, recentTopics)); }
-            catch { resolve(null); }
-          }, i * 120)
-        )
-      )
-    );
-
-    // Filter nulls and questions where the answer leaks into the question text
-    const valid = questions.filter(q => q && !hasAnswerLeak(q));
-    // Accept as few as 6 rather than retrying everything when a few are filtered
-    if (valid.length < 6) throw new Error('Too few questions generated');
+    // Source articles (Wikipedia category pool) and batch-generate all 10 questions in one Haiku call
+    const { questions: valid, thread } = await generateDailyBatch(env, date);
 
     // Translate to all supported languages in parallel
     const translations = await translateQuestions(valid, env.GOOGLE_TRANSLATE_KEY);
@@ -247,7 +569,7 @@ async function getDailyQuestions(env) {
       if (dailyImage) break;
     }
 
-    const payload = { date, questions: valid, translations, dailyImage, generatedAt: new Date().toISOString() };
+    const payload = { date, questions: valid, translations, dailyImage, thread, generatedAt: new Date().toISOString() };
     // Cache until midnight UTC + 2h buffer
     const now = Date.now();
     const midnight = new Date(date);
