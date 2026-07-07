@@ -716,11 +716,35 @@ let current = 0, score = 0, results = [], catScores = {}, isAnswered = false;
 
   const local = loadLocal();
   const startBtn = document.getElementById('start-btn');
-  if (local.sessions.some(s => s.date === todayStr())) {
+  const todaySession = local.sessions.find(s => s.date === todayStr());
+  if (todaySession) {
     document.getElementById('already-msg').textContent = t().alreadyPlayed;
     if (startBtn) { startBtn.textContent = t().playAgain; startBtn.dataset.playedToday = '1'; }
+    // Show today's finished results/share screen directly rather than the title
+    // screen — it stays available until the player explicitly hits Play Again.
+    if (todaySession.results) await restoreResults(todaySession);
   }
 })();
+
+// Reconstructs the results/share screen from a saved session (skips re-saving
+// to localStorage — showResults() already no-ops that for a date it's seen).
+async function restoreResults(session) {
+  document.getElementById('title-screen').style.display = 'none';
+  try {
+    const data = await fetchDailyQuestions();
+    dailyQuestions = data.questions;
+    dailyDate = data.date;
+    dailyImage = data.dailyImage || null;
+    dailyTranslations = data.translations || {};
+  } catch {
+    // Offline or the API failed — still show the score with a fallback postcard image.
+    dailyQuestions = new Array(session.total || session.results.length).fill(null);
+  }
+  score = session.score;
+  results = session.results;
+  catScores = session.cats;
+  await showResults();
+}
 
 // ══════════════════ FETCH DAILY Qs from Worker API ══════════════════
 async function fetchDailyQuestions() {
@@ -743,6 +767,11 @@ function showTab(t) {
 }
 
 // ══════════════════ QUIZ START ══════════════════
+function playAgain() {
+  document.getElementById('results-screen').style.display = 'none';
+  startQuiz();
+}
+
 async function startQuiz() {
   document.getElementById('title-screen').style.display = 'none';
   document.getElementById('quiz-screen').style.display = 'block';
@@ -875,7 +904,7 @@ async function showResults() {
     const yStr = yest.toISOString().split('T')[0];
     local.streak = local.lastDate===yStr ? (local.streak||0)+1 : 1;
     local.lastDate = today;
-    local.sessions.push({ date:today, score, cats:JSON.parse(JSON.stringify(catScores)), ts:Date.now() });
+    local.sessions.push({ date:today, score, cats:JSON.parse(JSON.stringify(catScores)), ts:Date.now(), results:[...results], total:dailyQuestions.length });
     local.sessions.sort((a,b)=>a.date.localeCompare(b.date));
     saveLocal(local);
   }
@@ -926,10 +955,11 @@ async function showResults() {
       <button class="share-btn instagram" onclick="shareInstagram()">Instagram</button>
     </div>
 
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:6px;">
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:6px;flex-wrap:wrap;">
       <button class="share-btn secondary" onclick="goHome()">← Home</button>
       <button class="share-btn secondary" onclick="showTab('leaderboard')">🏆 Leaderboard</button>
       <button class="share-btn secondary" onclick="showTab('progress')">📈 Progress</button>
+      <button class="share-btn secondary" onclick="playAgain()">🔁 Play Again</button>
     </div>`;
 
   // Render postcard into wrapper
@@ -940,6 +970,11 @@ async function showResults() {
   // Store canvas ref for download
   window._postcardCanvas = postcardCanvas;
   window._shareText = shareText;
+
+  // Pre-generate the share blob now (not inside the click handler) — navigator.share()
+  // must be called with no async gap after the user gesture, or browsers like iOS Safari
+  // silently revoke permission and it throws NotAllowedError.
+  window._postcardBlob = await new Promise(r => postcardCanvas.toBlob(r, 'image/png'));
 }
 
 // ══════════════════ POSTCARD GENERATOR ══════════════════
@@ -1195,7 +1230,10 @@ async function shareWhatsApp(encoded) {
   const canvas = window._postcardCanvas;
   if (!canvas) { window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank'); return; }
 
-  const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+  // Use the blob generated when the postcard was built — generating it here instead
+  // would insert an async gap before navigator.share(), and browsers like iOS Safari
+  // revoke share permission once that gap breaks the click's user-activation chain.
+  const blob = window._postcardBlob || await new Promise(r => canvas.toBlob(r, 'image/png'));
 
   // 1. Try native file share (works on mobile — sends image directly into WhatsApp)
   if (navigator.share && navigator.canShare) {
@@ -1206,7 +1244,7 @@ async function shareWhatsApp(encoded) {
         return;
       }
     } catch (e) {
-      if (e.name !== 'AbortError') { /* user cancelled — fall through */ }
+      if (e.name !== 'AbortError') { /* real failure (e.g. permission revoked) — fall through */ }
       else return;
     }
   }
@@ -1215,7 +1253,8 @@ async function shareWhatsApp(encoded) {
   //    WhatsApp can then embed the image as a link preview
   try {
     toast('Uploading postcard…');
-    const res = await fetch('/api/share', { method: 'POST', body: blob, headers: { 'Content-Type': 'image/png' } });
+    const dims = `w=${canvas.width}&h=${canvas.height}`;
+    const res = await fetch(`/api/share?${dims}`, { method: 'POST', body: blob, headers: { 'Content-Type': 'image/png' } });
     if (res.ok) {
       const { url: imgUrl } = await res.json();
       const waText = encodeURIComponent(imgUrl + '\n\n' + text);
