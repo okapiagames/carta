@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carta — Homepage (Design 2 mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ivory:#f6f2e9;
+  --ivory-2:#ece6d8;      /* very light warm grey — tertiary, decorative washes only */
+  --ink:#1c1917;          /* carbon black — all body/heading text */
+  --ink-soft:#2e2a25;     /* secondary text/labels — still AA-safe on ivory */
+  --gold:#9c7a3c;         /* accent — borders, rules, hover only, never text */
+  --vermilion:#8a2f22;    /* accent — icon glyphs only, never text blocks */
+  --hairline:rgba(28,25,23,0.14);
+  --hairline-strong:rgba(28,25,23,0.30);
+  --serif:'Zen Old Mincho', serif;
+  --sans:'Zen Kaku Gothic New','IBM Plex Sans', sans-serif;
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--ivory); color:var(--ink);
+  font-family:var(--sans);
+  min-height:100vh;
+  display:flex; flex-direction:column; align-items:center;
+}
+a{color:inherit;}
+:focus-visible{outline:1.5px solid var(--ink); outline-offset:4px;}
+:focus:not(:focus-visible){outline:none;}
+
+header{
+  width:100%; max-width:720px;
+  display:flex; align-items:baseline; justify-content:space-between;
+  padding:28px 24px 18px;
+  border-bottom:1px solid var(--hairline);
+}
+.mark{font-size:13px; font-weight:600; letter-spacing:0.22em; color:var(--ink);}
+.date{font-size:12px; letter-spacing:0.08em; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+
+.stage{
+  width:100%; max-width:560px;
+  flex:1;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center;
+  padding:80px 24px 100px;
+  min-height:70vh;
+}
+
+.eyebrow{
+  font-size:11px; font-weight:500; letter-spacing:0.16em; text-transform:uppercase;
+  color:var(--ink-soft); margin-bottom:22px;
+}
+.title{
+  font-family:var(--serif); font-weight:500; font-size:68px; line-height:1;
+  letter-spacing:-0.01em; margin-bottom:24px;
+}
+.lede{
+  font-size:17px; line-height:1.75; color:var(--ink-soft);
+  max-width:38ch; margin-bottom:36px;
+}
+.categories{
+  display:flex; align-items:center; gap:14px;
+  font-size:13px; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-soft);
+  margin-bottom:40px;
+}
+.categories .sep{color:var(--hairline-strong);}
+
+.challenge{
+  border-left:2px solid var(--gold);
+  padding:12px 20px; margin-bottom:36px;
+  text-align:left; max-width:400px;
+  font-size:14px; line-height:1.6; color:var(--ink-soft);
+}
+.challenge strong{color:var(--ink); font-weight:600;}
+
+.cta{
+  appearance:none; background:transparent; cursor:pointer;
+  border:1px solid var(--ink-soft); border-radius:0;
+  padding:16px 40px;
+  font-family:var(--sans); font-size:13px; font-weight:500;
+  letter-spacing:0.1em; text-transform:uppercase; color:var(--ink);
+  display:inline-flex; align-items:center; gap:10px;
+  min-height:44px;
+  transition:border-color 150ms ease;
+}
+.cta .arrow{transition:transform 150ms ease; font-size:14px;}
+.cta:hover{border-color:var(--gold);}
+.cta:hover .arrow{transform:translateX(3px);}
+
+.footnote{
+  display:none;
+  margin-top:20px; font-size:13px; color:var(--ink-soft);
+}
+body.is-played .challenge,
+body.is-played .cta{display:none;}
+body.is-played .footnote{display:block;}
+
+footer{
+  width:100%; max-width:720px;
+  padding:18px 24px 28px;
+  border-top:1px solid var(--hairline);
+  font-size:11px; letter-spacing:0.06em; color:var(--ink-soft);
+  text-align:center;
+}
+
+/* reviewer-only control — not part of the design, remove before integrating */
+.dev-toggle{
+  position:fixed; bottom:16px; right:16px;
+  font-size:11px; color:var(--hairline-strong); background:none; border:1px solid var(--hairline);
+  padding:6px 10px; cursor:pointer; font-family:var(--sans);
+}
+.dev-toggle:hover{color:var(--ink-soft);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark">CARTA</div>
+  <div class="date">01 · 07 · 2026</div>
+</header>
+
+<main class="stage">
+  <p class="eyebrow">Daily — Ten Questions</p>
+  <h1 class="title">Carta</h1>
+  <p class="lede">Everyone answers the same ten questions each day.<br>History and geography, drawn from Wikipedia.</p>
+  <div class="categories">
+    <span>History</span><span class="sep">·</span><span>Geography</span>
+  </div>
+
+  <div class="challenge">
+    <p><strong>Priya</strong> scored <strong>8 / 10</strong> today — can you beat them?</p>
+  </div>
+
+  <button class="cta" type="button">Begin Today's Ten <span class="arrow">→</span></button>
+  <p class="footnote">You've already played today. Come back tomorrow.</p>
+</main>
+
+<footer>Okapia Games · Bengaluru</footer>
+
+<button class="dev-toggle" onclick="document.body.classList.toggle('is-played')" type="button">toggle: already played</button>
+
+</body>
+</html>

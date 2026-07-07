@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carta — Question (Design 2 mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ivory:#f6f2e9;
+  --ivory-2:#ece6d8;
+  --ink:#1c1917;
+  --ink-soft:#2e2a25;
+  --gold:#9c7a3c;
+  --vermilion:#8a2f22;
+  --hairline:rgba(28,25,23,0.14);
+  --hairline-strong:rgba(28,25,23,0.30);
+  --serif:'Zen Old Mincho', serif;
+  --sans:'Zen Kaku Gothic New','IBM Plex Sans', sans-serif;
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--ivory); color:var(--ink);
+  font-family:var(--sans);
+  min-height:100vh;
+  display:flex; flex-direction:column; align-items:center;
+}
+a{color:inherit;}
+:focus-visible{outline:1.5px solid var(--ink); outline-offset:4px;}
+:focus:not(:focus-visible){outline:none;}
+
+header{
+  width:100%; max-width:720px;
+  display:flex; align-items:baseline; justify-content:space-between;
+  padding:28px 24px 18px;
+  border-bottom:1px solid var(--hairline);
+}
+.mark{font-size:13px; font-weight:600; letter-spacing:0.22em; color:var(--ink);}
+.date{font-size:12px; letter-spacing:0.08em; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+
+.stage{
+  width:100%; max-width:600px;
+  padding:56px 24px 100px;
+}
+
+/* ── progress: a printed ruler, not a game HUD ── */
+.progress{margin-bottom:52px;}
+.progress-rail{position:relative; height:1px; background:var(--hairline-strong); margin-bottom:12px;}
+.progress-fill{position:absolute; left:0; top:0; height:1px; background:var(--gold); width:20%; transition:width 150ms ease;}
+.progress-ticks{position:absolute; inset:0; display:flex; justify-content:space-between; align-items:center;}
+.tick{position:relative; width:1px; height:9px; background:var(--ink-soft); transform:translateY(-4px);}
+.tick[data-state="current"]{height:14px; transform:translateY(-6px); background:var(--ink);}
+.tick[data-state="current"]::after{content:'';position:absolute; top:-7px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:var(--gold);}
+.tick[data-state="correct"]{background:var(--ink);}
+.tick[data-state="correct"]::before{content:'';position:absolute; top:-8px; left:50%; transform:translateX(-50%); width:3px; height:3px; border-radius:50%; background:var(--ink);}
+.tick[data-state="wrong"]{background:var(--ink);}
+.tick[data-state="wrong"]::before{content:'';position:absolute; top:-8px; left:50%; transform:translate(-50%,0) rotate(45deg); width:3px; height:3px; background:var(--vermilion);}
+.progress-label{font-size:12px; letter-spacing:0.08em; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+
+.category{
+  font-size:12px; font-weight:500; letter-spacing:0.14em; text-transform:uppercase;
+  color:var(--ink-soft); padding-bottom:8px; border-bottom:1px solid var(--hairline);
+  display:inline-block; margin-bottom:28px;
+}
+.question{
+  font-family:var(--serif); font-weight:500; font-size:28px; line-height:1.55;
+  margin-bottom:40px; max-width:34ch;
+}
+
+.options{list-style:none;}
+.option{
+  appearance:none; background:none; border:none; border-top:1px solid var(--hairline);
+  width:100%; display:flex; align-items:center; gap:18px;
+  padding:19px 4px; cursor:pointer; text-align:left;
+  font-family:var(--sans); color:var(--ink);
+  min-height:44px;
+  transition:background-color 150ms ease;
+}
+.options li:last-child .option{border-bottom:1px solid var(--hairline);}
+.option .letter{font-family:var(--serif); font-size:15px; color:var(--ink-soft); width:20px; flex-shrink:0;}
+.option .text{font-size:17px; flex:1; line-height:1.5;}
+.option .mark{width:18px; text-align:center; font-size:15px; opacity:0; flex-shrink:0;}
+.option:not(:disabled):hover{background:rgba(28,25,23,0.035);}
+.option:not(:disabled):hover .text{text-decoration:underline; text-decoration-color:var(--hairline-strong);}
+.option:disabled{cursor:default;}
+
+.option[data-state="correct"]{box-shadow:inset 2px 0 0 var(--ink); background:rgba(28,25,23,0.03);}
+.option[data-state="correct"] .mark{opacity:1;}
+.option[data-state="correct"] .mark::after{content:'✓';}
+.option[data-state="correct"] .text{font-weight:600;}
+
+.option[data-state="wrong"]{box-shadow:inset 2px 0 0 var(--vermilion); background:rgba(138,47,34,0.04);}
+.option[data-state="wrong"] .mark{opacity:1; color:var(--vermilion);}
+.option[data-state="wrong"] .mark::after{content:'✕';}
+.option[data-state="wrong"] .text{text-decoration:line-through; text-decoration-color:var(--vermilion); text-decoration-thickness:1px;}
+
+.option[data-state="dim"]{color:var(--ink-soft); opacity:0.55;}
+
+.explanation{
+  margin-top:36px; padding-top:24px; border-top:1px solid var(--hairline);
+  display:none;
+}
+.explanation.show{display:block;}
+.explanation-label{
+  font-size:11px; font-weight:500; letter-spacing:0.16em; text-transform:uppercase;
+  color:var(--ink-soft); margin-bottom:10px;
+}
+.explanation p{font-size:16px; line-height:1.75; color:var(--ink);}
+.explanation a{text-decoration:underline; text-decoration-color:var(--hairline-strong); white-space:nowrap;}
+.explanation a:hover{text-decoration-color:var(--gold);}
+
+.meta-links{
+  display:flex; align-items:center; gap:14px; margin-top:20px;
+  font-size:12px; letter-spacing:0.04em; color:var(--ink-soft);
+}
+.meta-links a{text-decoration:none; border-bottom:1px solid var(--hairline-strong); padding-bottom:1px;}
+.meta-links a:first-child:hover{color:var(--vermilion); border-color:var(--vermilion);}
+.meta-links a:last-child:hover{color:var(--ink); border-color:var(--gold);}
+.meta-links .sep{color:var(--hairline-strong);}
+
+.cta{
+  appearance:none; background:transparent; cursor:pointer;
+  border:1px solid var(--ink-soft);
+  padding:16px 40px; margin-top:36px;
+  font-family:var(--sans); font-size:13px; font-weight:500;
+  letter-spacing:0.1em; text-transform:uppercase; color:var(--ink);
+  display:none; align-items:center; gap:10px;
+  min-height:44px;
+  transition:border-color 150ms ease;
+}
+.cta.show{display:inline-flex;}
+.cta .arrow{transition:transform 150ms ease; font-size:14px;}
+.cta:hover{border-color:var(--gold);}
+.cta:hover .arrow{transform:translateX(3px);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark">CARTA</div>
+  <div class="date">01 · 07 · 2026</div>
+</header>
+
+<main class="stage">
+
+  <div class="progress" role="img" aria-label="Question 3 of 10">
+    <div class="progress-rail">
+      <div class="progress-fill" style="width:20%"></div>
+      <div class="progress-ticks">
+        <span class="tick" data-state="correct"></span>
+        <span class="tick" data-state="wrong"></span>
+        <span class="tick" data-state="current"></span>
+        <span class="tick" data-state="pending"></span>
+        <span class="tick" data-state="pending"></span>
+        <span class="tick" data-state="pending"></span>
+        <span class="tick" data-state="pending"></span>
+        <span class="tick" data-state="pending"></span>
+        <span class="tick" data-state="pending"></span>
+        <span class="tick" data-state="pending"></span>
+      </div>
+    </div>
+    <p class="progress-label">03 — 10</p>
+  </div>
+
+  <p class="category">Geography</p>
+  <h1 class="question">Which strait separates the Iberian Peninsula from North Africa?</h1>
+
+  <ul class="options" id="options">
+    <li><button class="option" data-answer><span class="letter">A</span><span class="text">Strait of Hormuz</span><span class="mark"></span></button></li>
+    <li><button class="option" data-answer data-correct><span class="letter">B</span><span class="text">Strait of Gibraltar</span><span class="mark"></span></button></li>
+    <li><button class="option" data-answer><span class="letter">C</span><span class="text">Bosphorus Strait</span><span class="mark"></span></button></li>
+    <li><button class="option" data-answer><span class="letter">D</span><span class="text">Strait of Malacca</span><span class="mark"></span></button></li>
+  </ul>
+
+  <div class="explanation" id="explanation">
+    <p class="explanation-label">Note</p>
+    <p>The Strait of Gibraltar separates Spain from Morocco, connecting the Atlantic Ocean to the Mediterranean Sea. <a href="#" target="_blank" rel="noopener">Read the source →</a></p>
+    <div class="meta-links">
+      <a href="#">Dispute this answer</a><span class="sep">·</span><a href="#">Discuss on Reddit</a>
+    </div>
+  </div>
+
+  <button class="cta" id="next-btn" type="button">Next Question <span class="arrow">→</span></button>
+
+</main>
+
+<script>
+document.querySelectorAll('.option').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (document.getElementById('options').dataset.answered) return;
+    document.getElementById('options').dataset.answered = '1';
+    document.querySelectorAll('.option').forEach(o => {
+      o.disabled = true;
+      if (o.hasAttribute('data-correct')) o.dataset.state = 'correct';
+      else if (o === btn) o.dataset.state = 'wrong';
+      else o.dataset.state = 'dim';
+    });
+    document.getElementById('explanation').classList.add('show');
+    document.getElementById('next-btn').classList.add('show');
+  });
+});
+</script>
+
+</body>
+</html>
