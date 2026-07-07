@@ -875,8 +875,13 @@ export default {
         const buf = await request.arrayBuffer();
         if (buf.byteLength > 3 * 1024 * 1024) return json({ error: 'Too large' }, 400);
         const id = crypto.randomUUID().slice(0, 12);
+        // Actual PNG pixel size varies with the uploading device's devicePixelRatio —
+        // store it so the OG tags below reflect the real image instead of a guess.
+        const w = parseInt(url.searchParams.get('w'), 10);
+        const h = parseInt(url.searchParams.get('h'), 10);
         await env.POSTCARDS.put(`postcard:${id}`, buf, {
           httpMetadata: { contentType: 'image/png' },
+          customMetadata: (w > 0 && h > 0) ? { w: String(w), h: String(h) } : {},
         });
         const origin = new URL(request.url).origin;
         return json({ url: `${origin}/share/${id}` });
@@ -904,6 +909,10 @@ export default {
       const id = path.slice(7);
       const origin = new URL(request.url).origin;
       const imgUrl = `${origin}/img/${id}.png`;
+      const meta = await env.POSTCARDS.head(`postcard:${id}`);
+      // Fall back to the common 2x-DPR postcard size if metadata is missing (older links).
+      const imgW = parseInt(meta?.customMetadata?.w, 10) || 1800;
+      const imgH = parseInt(meta?.customMetadata?.h, 10) || 1000;
       const html = `<!DOCTYPE html><html><head>
 <meta charset="utf-8">
 <title>Carta · Daily Atlas Trivia</title>
@@ -913,8 +922,8 @@ export default {
 <meta property="og:description" content="Can you beat my score? Ten questions every day — history, geography, general knowledge.">
 <meta property="og:image" content="${imgUrl}">
 <meta property="og:image:type" content="image/png">
-<meta property="og:image:width" content="1800">
-<meta property="og:image:height" content="1000">
+<meta property="og:image:width" content="${imgW}">
+<meta property="og:image:height" content="${imgH}">
 <meta property="og:url" content="${origin}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="${imgUrl}">
