@@ -158,16 +158,20 @@ smug. A good question from you doesn't feel like a test. It feels like
 being handed the first half of a story and asked to guess how it ends —
 and getting there should feel like unlocking something, not just recall.`;
 
-const QUESTION_CRAFT_RULES = `QUESTION CRAFT — build it like a story, not a lookup:
+const QUESTION_CRAFT_RULES = `QUESTION CRAFT — build it like a story, not a lookup, but keep it tight:
 - Open with a scene, a tension, or a genuinely surprising detail — never a
-  bare "What is X" stem.
-- Let the question build toward its ask, so the actual question lands as
-  the final beat, right at the question mark.
+  bare "What is X" stem. Two or three sentences is plenty; a good hook
+  doesn't need a paragraph of wind-up.
+- Vary the shape across the ten questions. Not every one needs a full
+  "When X happened..." setup — some can be short and punchy, others more
+  narrative. The same sentence structure ten times in a row reads as a
+  formula, not a story.
 - Thread in one true, verifiable detail that deepens the world around the
   answer — a place, a consequence, a link to another era or region —
   without naming or hinting at the correct option.
-- The question should read like the first half of an anecdote; answering
-  it correctly should feel like the story just clicked into place.`;
+- The question should read like the doorway into an anecdote, not the
+  whole anecdote. Answering it correctly should feel like the story just
+  clicked into place.`;
 
 const ANSWER_OPTION_RULES = `ANSWER OPTIONS — four distinct types:
 1. The correct answer — unambiguously right, verifiable.
@@ -185,7 +189,9 @@ const EXPLANATION_RULES = `EXPLANATION: 2-3 sentences that complete the story �
 consequence, or a thread linking this fact to another place, era,
 invention, or person. The kind of detail that makes you want to keep
 reading, not a dry restatement of the question. Light wit if it fits
-naturally. Never forced.`;
+naturally. Never forced. Every few questions, let a little personality
+leak through — a wry aside, an admitted soft spot for a topic, a knowing
+wink — but don't force it into every single one.`;
 
 const ACCURACY_RULES = `ACCURACY:
 - Every question must be based on a well-established fact with a dedicated
