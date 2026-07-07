@@ -27,7 +27,7 @@
      rather than color name. This indirection is what lets a re-theme
      (dark mode, seasonal palette, etc.) touch only the block above. ── */
   --bg:var(--p-ivory); --surface:var(--p-ivory); --surface2:var(--p-ivory-2); --surface3:var(--p-ivory-2);
-  --border:rgba(var(--p-ink-rgb),0.14); --border-gold:rgba(var(--p-gold-rgb),0.5);
+  --border:rgba(var(--p-ink-rgb),0.28); --border-gold:rgba(var(--p-gold-rgb),0.6);
   --gold:var(--p-gold); --gold-bright:var(--p-gold-bright);
   --accent:var(--p-gold); --accent-bg:rgba(var(--p-gold-rgb),0.10);
   --text:var(--p-ink); --text-muted:var(--p-ink-soft); --text-dim:var(--p-ink-soft);
@@ -41,6 +41,7 @@
 body{
   background:var(--bg); color:var(--text);
   font-family:var(--sans),'Noto Sans Tamil','Noto Sans Devanagari','Noto Sans Bengali','Noto Sans Kannada','Noto Sans JP',sans-serif;
+  font-size:17px; line-height:1.6;
   min-height:100vh;
   display:flex; flex-direction:column; align-items:center;
   padding:16px 16px 80px;
@@ -73,10 +74,11 @@ body{
   padding:3px; margin-bottom:20px; width:100%;max-width:680px;
 }
 .nav-tab{
-  flex:1;padding:9px 8px; border:none;border-radius:9px;
+  flex:1;padding:11px 8px; border:none;border-radius:9px;
   background:transparent;color:var(--text-muted);
-  font-family:var(--sans);font-size:13px;font-weight:600;
+  font-family:var(--sans);font-size:15px;font-weight:600;
   cursor:pointer;transition:all 0.18s;
+  min-height:44px;
 }
 .nav-tab.active{background:var(--surface3);color:var(--text);}
 .nav-tab:hover:not(.active){color:var(--text);background:rgba(var(--p-ink-rgb),0.04);}
@@ -113,45 +115,47 @@ body{
 /* ── TITLE SCREEN ── */
 .title-screen{text-align:center;}
 .title-main{font-family:var(--serif);font-size:52px;font-weight:900;color:var(--text);line-height:1;margin-bottom:12px;letter-spacing:-1px;}
-.title-sub{font-size:16px;color:var(--text-muted);line-height:1.65;max-width:340px;margin:0 auto 22px;}
+.title-sub{font-size:18px;color:var(--text);line-height:1.6;max-width:360px;margin:0 auto 24px;}
 .topic-pills{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
-.pill{background:var(--surface2);color:var(--text-muted);padding:5px 14px;border-radius:100px;font-size:12px;font-weight:500;border:1px solid var(--border);}
+.pill{background:var(--surface2);color:var(--text);padding:6px 15px;border-radius:100px;font-size:13px;font-weight:600;border:1px solid var(--border);}
 .challenge-banner{
   background:var(--accent-bg);border:1px solid rgba(var(--p-gold-rgb),0.25);
   border-radius:10px;padding:14px 18px;margin-bottom:20px;
-  font-size:14px;color:var(--text);display:none;
+  font-size:15px;color:var(--text);display:none;
 }
 .challenge-banner strong{color:var(--gold-bright);}
 .start-btn{
   background:var(--gold);color:var(--on-accent);border:none;border-radius:10px;
-  padding:14px 48px;font-size:16px;font-weight:700;cursor:pointer;
+  padding:17px 52px;font-size:18px;font-weight:700;cursor:pointer;
   font-family:var(--sans);transition:all 0.2s;
   box-shadow:0 4px 20px rgba(var(--p-gold-rgb),0.3);
+  min-height:44px;
 }
 .start-btn:hover{background:var(--gold-bright);transform:translateY(-2px);box-shadow:0 6px 28px rgba(var(--p-gold-rgb),0.4);}
-.already-msg{font-size:13px;color:var(--text-dim);margin-top:12px;}
+.already-msg{font-size:14px;color:var(--text-muted);margin-top:12px;}
 
 /* ── QUESTION ── */
-.q-num{font-size:12px;color:var(--text-dim);margin-bottom:6px;font-weight:500;}
-.question-text{font-family:var(--serif);font-size:21px;font-weight:700;line-height:1.5;color:var(--text);margin-bottom:8px;}
-.options{display:flex;flex-direction:column;gap:9px;}
+.q-num{font-size:14px;color:var(--text-dim);margin-bottom:8px;font-weight:600;}
+.question-text{font-family:var(--sans);font-size:24px;font-weight:700;line-height:1.4;color:var(--text);margin-bottom:10px;}
+.options{display:flex;flex-direction:column;gap:11px;}
 .option-btn{
-  background:var(--surface2);border:1.5px solid var(--border);
-  border-radius:10px;padding:13px 16px;text-align:left;
-  cursor:pointer;font-family:var(--sans);font-size:14px;font-weight:500;
+  background:var(--surface2);border:2px solid var(--border);
+  border-radius:10px;padding:17px 18px;text-align:left;
+  cursor:pointer;font-family:var(--sans);font-size:17px;font-weight:500;
   color:var(--text);transition:all 0.15s;
-  display:flex;align-items:center;gap:12px;
+  display:flex;align-items:center;gap:14px;
+  min-height:44px;
 }
 .option-btn:hover:not(:disabled){border-color:var(--border-gold);background:rgba(var(--p-gold-rgb),0.06);}
-.opt-letter{width:26px;height:26px;border-radius:7px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text-muted);flex-shrink:0;transition:all 0.15s;}
+.opt-letter{width:32px;height:32px;border-radius:7px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--text-muted);flex-shrink:0;transition:all 0.15s;}
 .option-btn.correct{background:var(--correct-bg);border-color:var(--correct);}
-.option-btn.correct .opt-letter{background:var(--correct);color:var(--on-accent);}
+.option-btn.correct .opt-letter{background:var(--correct);color:var(--on-accent);font-size:17px;}
 .option-btn.wrong{background:var(--wrong-bg);border-color:var(--wrong);}
-.option-btn.wrong .opt-letter{background:var(--wrong);color:var(--on-accent);}
+.option-btn.wrong .opt-letter{background:var(--wrong);color:var(--on-accent);font-size:15px;}
 .option-btn:disabled{cursor:default;opacity:0.85;}
-.explanation{margin-top:16px;padding:14px 16px;background:rgba(var(--p-gold-rgb),0.06);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;font-size:15px;line-height:1.65;color:var(--text-muted);display:none;}
+.explanation{margin-top:16px;padding:16px 18px;background:rgba(var(--p-gold-rgb),0.08);border-left:4px solid var(--gold);border-radius:0 8px 8px 0;font-size:17px;line-height:1.65;color:var(--text);display:none;}
 .explanation.show{display:block;}
-.next-btn{margin-top:18px;width:100%;background:var(--gold);color:var(--on-accent);border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;font-family:var(--sans);cursor:pointer;transition:all 0.2s;display:none;}
+.next-btn{margin-top:18px;width:100%;background:var(--gold);color:var(--on-accent);border:none;border-radius:10px;padding:16px;font-size:17px;font-weight:700;font-family:var(--sans);cursor:pointer;transition:all 0.2s;display:none;}
 .next-btn:hover{background:var(--gold-bright);}
 .next-btn.show{display:block;}
 
@@ -164,9 +168,9 @@ body{
 /* ── RESULTS ── */
 .results-card{text-align:center;}
 .score-display{font-family:var(--serif);font-size:80px;font-weight:900;color:var(--gold);line-height:1;margin:10px 0 4px;}
-.score-label{font-size:14px;color:var(--text-muted);margin-bottom:16px;font-weight:500;}
+.score-label{font-size:15px;color:var(--text);margin-bottom:16px;font-weight:600;}
 .verdict{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--text);margin-bottom:6px;}
-.verdict-sub{font-size:15px;color:var(--text-muted);margin-bottom:24px;line-height:1.5;}
+.verdict-sub{font-size:16px;color:var(--text);margin-bottom:24px;line-height:1.5;}
 .breakdown{display:flex;justify-content:center;gap:32px;margin-bottom:24px;}
 .bdn{font-family:var(--serif);font-size:28px;font-weight:700;}
 .bdn.c{color:var(--correct);} .bdn.w{color:var(--wrong);}
@@ -182,8 +186,9 @@ body{
 
 .share-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;}
 .share-btn{
-  padding:10px 20px; border-radius:10px; font-size:13px; font-weight:600;
+  padding:12px 20px; border-radius:10px; font-size:14px; font-weight:600;
   font-family:var(--sans); cursor:pointer; transition:all 0.18s; border:none;
+  min-height:44px;
 }
 .share-btn.primary{background:var(--gold);color:var(--on-accent);box-shadow:0 2px 12px rgba(var(--p-gold-rgb),0.25);}
 .share-btn.primary:hover{background:var(--gold-bright);}
@@ -825,8 +830,12 @@ function buildMap(id, n, cur, res) {
   let h = '';
   for (let i=0;i<n;i++) {
     if (i>0) h += `<div class="map-line ${i<=cur?'done':''}"></div>`;
-    const cls = res&&res[i]!==undefined ? (res[i]?'correct-dot':'wrong-dot') : i===cur?'current':'';
-    h += `<div class="map-dot ${cls}">${i+1}</div>`;
+    const answered = res && res[i] !== undefined;
+    const cls = answered ? (res[i]?'correct-dot':'wrong-dot') : i===cur?'current':'';
+    // Never rely on color alone to show correct/wrong — a star/cross symbol carries the
+    // meaning too, so it still reads correctly for colorblind players.
+    const content = answered ? (res[i] ? '★' : '✕') : (i+1);
+    h += `<div class="map-dot ${cls}" aria-label="${answered ? (res[i]?'Correct':'Wrong') : `Question ${i+1}`}">${content}</div>`;
   }
   el.innerHTML = h;
 }
@@ -900,8 +909,11 @@ function answer(chosen) {
   for (let i=0;i<4;i++) {
     const b=document.getElementById(`opt-${i}`); if(!b)continue;
     b.disabled=true;
-    if(i===q.correct)b.classList.add('correct');
-    else if(i===chosen)b.classList.add('wrong');
+    const letterEl = b.querySelector('.opt-letter');
+    // Symbol + color, not color alone — ink vs. vermilion is too subtle a difference
+    // for colorblind players to rely on by itself.
+    if(i===q.correct){ b.classList.add('correct'); if(letterEl){letterEl.textContent='★'; letterEl.setAttribute('aria-label','Correct answer');} }
+    else if(i===chosen){ b.classList.add('wrong'); if(letterEl){letterEl.textContent='✕'; letterEl.setAttribute('aria-label','Your answer, incorrect');} }
   }
   document.getElementById('explanation').classList.add('show');
   document.getElementById('next-btn').classList.add('show');
