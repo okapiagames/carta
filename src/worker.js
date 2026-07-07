@@ -23,80 +23,139 @@ const EXCLUDED_TITLE_PREFIXES = ['List of', 'Timeline of', 'Index of', 'Wikipedi
 
 // ── Category pool for Wikipedia article sourcing ─────────────────────────────
 // Weights deliberately counteract Wikipedia's own coverage bias (which massively
-// overrepresents the US, UK, and Western Europe). Do not rebalance these —
-// they're an intentional editorial choice, not a bug.
+// overrepresents the US, UK, and Western Europe). Do not rebalance the relative
+// weight given to each region — that's an intentional editorial choice, not a
+// bug. Within a region, both narrow "flavour" categories (a specific dynasty)
+// and broad "History/Geography of {place}" categories are deliberately mixed —
+// narrow ones give a category real texture, broad ones stop the same 5-6
+// empires from being the only thing that ever gets asked about. Europe is
+// capped intentionally and should not gain new categories.
 const CATEGORY_POOL = [
-  // South Asia (~32)
+  // South Asia (~52)
   { cat: 'Chola dynasty',                region: 'South Asia', type: 'History',   weight: 4 },
   { cat: 'Maurya Empire',                region: 'South Asia', type: 'History',   weight: 4 },
   { cat: 'Mughal Empire',                region: 'South Asia', type: 'History',   weight: 4 },
   { cat: 'Gupta Empire',                 region: 'South Asia', type: 'History',   weight: 3 },
   { cat: 'Vijayanagara Empire',          region: 'South Asia', type: 'History',   weight: 3 },
   { cat: 'Indus Valley Civilisation',    region: 'South Asia', type: 'History',   weight: 3 },
+  { cat: 'Vedic period',                 region: 'South Asia', type: 'History',   weight: 2 },
+  { cat: 'Maratha Empire',               region: 'South Asia', type: 'History',   weight: 3 },
+  { cat: 'Sikh Empire',                  region: 'South Asia', type: 'History',   weight: 2 },
+  { cat: 'Indian independence movement', region: 'South Asia', type: 'History',   weight: 3 },
+  { cat: 'Bengal Sultanate',             region: 'South Asia', type: 'History',   weight: 1 },
   { cat: 'Geography of India',           region: 'South Asia', type: 'Geography', weight: 3 },
   { cat: 'Rivers of India',              region: 'South Asia', type: 'Geography', weight: 2 },
   { cat: 'Mountains of India',           region: 'South Asia', type: 'Geography', weight: 2 },
   { cat: 'World Heritage Sites in India',region: 'South Asia', type: 'Geography', weight: 4 },
+  { cat: 'Geography of South Asia',      region: 'South Asia', type: 'Geography', weight: 2 },
+  { cat: 'Himalayas',                    region: 'South Asia', type: 'Geography', weight: 3 },
+  { cat: 'Islands of India',             region: 'South Asia', type: 'Geography', weight: 3 },
+  { cat: 'Western Ghats',                region: 'South Asia', type: 'Geography', weight: 1 },
 
-  // Africa (~28)
+  // Africa (~47)
   { cat: 'Mali Empire',                  region: 'Africa', type: 'History',   weight: 4 },
   { cat: 'Kingdom of Kush',              region: 'Africa', type: 'History',   weight: 4 },
   { cat: 'Ethiopian Empire',             region: 'Africa', type: 'History',   weight: 3 },
   { cat: 'Ancient Egypt',                region: 'Africa', type: 'History',   weight: 4 },
   { cat: 'Swahili people',               region: 'Africa', type: 'History',   weight: 3 },
   { cat: 'Great Zimbabwe',               region: 'Africa', type: 'History',   weight: 3 },
+  { cat: 'History of Africa',            region: 'Africa', type: 'History',   weight: 3 },
+  { cat: 'History of West Africa',       region: 'Africa', type: 'History',   weight: 2 },
+  { cat: 'History of North Africa',      region: 'Africa', type: 'History',   weight: 2 },
+  { cat: 'History of East Africa',       region: 'Africa', type: 'History',   weight: 1 },
+  { cat: 'Kingdom of Aksum',             region: 'Africa', type: 'History',   weight: 2 },
+  { cat: 'Sokoto Caliphate',             region: 'Africa', type: 'History',   weight: 2 },
+  { cat: 'Nubia',                        region: 'Africa', type: 'History',   weight: 2 },
+  { cat: 'Ashanti Empire',               region: 'Africa', type: 'History',   weight: 1 },
+  { cat: 'Decolonisation of Africa',     region: 'Africa', type: 'History',   weight: 1 },
+  { cat: 'African queens',               region: 'Africa', type: 'History',   weight: 2 },
   { cat: 'Geography of Africa',          region: 'Africa', type: 'Geography', weight: 2 },
   { cat: 'Rivers of Africa',             region: 'Africa', type: 'Geography', weight: 2 },
   { cat: 'Mountains of Africa',          region: 'Africa', type: 'Geography', weight: 1 },
   { cat: 'World Heritage Sites in Africa',region: 'Africa', type: 'Geography', weight: 2 },
+  { cat: 'Great Rift Valley',            region: 'Africa', type: 'Geography', weight: 2 },
+  { cat: 'Islands of Africa',            region: 'Africa', type: 'Geography', weight: 1 },
 
-  // MENA (~21)
+  // MENA (~35)
   { cat: 'Islamic Golden Age',           region: 'MENA', type: 'History',   weight: 4 },
   { cat: 'Achaemenid Empire',            region: 'MENA', type: 'History',   weight: 3 },
   { cat: 'Ottoman Empire',               region: 'MENA', type: 'History',   weight: 3 },
   { cat: 'Abbasid Caliphate',            region: 'MENA', type: 'History',   weight: 3 },
+  { cat: 'Ancient Mesopotamia',          region: 'MENA', type: 'History',   weight: 3 },
+  { cat: 'Islamic art',                  region: 'MENA', type: 'History',   weight: 2 },
+  { cat: 'Arabic literature',            region: 'MENA', type: 'History',   weight: 2 },
+  { cat: 'Fatimid Caliphate',            region: 'MENA', type: 'History',   weight: 1 },
+  { cat: 'Safavid dynasty',              region: 'MENA', type: 'History',   weight: 2 },
+  { cat: 'Umayyad Caliphate',            region: 'MENA', type: 'History',   weight: 1 },
+  { cat: 'Mamluk Sultanate',             region: 'MENA', type: 'History',   weight: 1 },
+  { cat: 'History of Iran',              region: 'MENA', type: 'History',   weight: 2 },
   { cat: 'Geography of the Middle East', region: 'MENA', type: 'Geography', weight: 3 },
   { cat: 'Rivers of Iran',               region: 'MENA', type: 'Geography', weight: 3 },
   { cat: 'World Heritage Sites in Iran', region: 'MENA', type: 'Geography', weight: 2 },
 
-  // SE Asia (~19)
+  // SE Asia (~29)
   { cat: 'Khmer Empire',                 region: 'SE Asia', type: 'History',   weight: 4 },
   { cat: 'Majapahit',                    region: 'SE Asia', type: 'History',   weight: 3 },
   { cat: 'Srivijaya',                    region: 'SE Asia', type: 'History',   weight: 3 },
+  { cat: 'History of Southeast Asia',    region: 'SE Asia', type: 'History',   weight: 3 },
+  { cat: 'History of Indonesia',         region: 'SE Asia', type: 'History',   weight: 1 },
+  { cat: 'History of Vietnam',           region: 'SE Asia', type: 'History',   weight: 1 },
+  { cat: 'History of Thailand',          region: 'SE Asia', type: 'History',   weight: 2 },
+  { cat: 'History of Cambodia',          region: 'SE Asia', type: 'History',   weight: 1 },
   { cat: 'Geography of Southeast Asia',  region: 'SE Asia', type: 'Geography', weight: 3 },
   { cat: 'Mekong',                       region: 'SE Asia', type: 'Geography', weight: 3 },
   { cat: 'World Heritage Sites in Indonesia', region: 'SE Asia', type: 'Geography', weight: 3 },
+  { cat: 'Islands of Indonesia',         region: 'SE Asia', type: 'Geography', weight: 2 },
 
-  // East/Central Asia (~18)
+  // East/Central Asia (~32)
   { cat: 'Tang dynasty',                 region: 'East/Central Asia', type: 'History',   weight: 3 },
   { cat: 'Song dynasty',                 region: 'East/Central Asia', type: 'History',   weight: 3 },
   { cat: 'Mongol Empire',                region: 'East/Central Asia', type: 'History',   weight: 4 },
+  { cat: 'History of China',             region: 'East/Central Asia', type: 'History',   weight: 2 },
+  { cat: 'History of Korea',             region: 'East/Central Asia', type: 'History',   weight: 3 },
+  { cat: 'History of Central Asia',      region: 'East/Central Asia', type: 'History',   weight: 3 },
+  { cat: 'History of Mongolia',          region: 'East/Central Asia', type: 'History',   weight: 1 },
+  { cat: 'History of Japan',             region: 'East/Central Asia', type: 'History',   weight: 1 },
   { cat: 'Geography of East Asia',       region: 'East/Central Asia', type: 'Geography', weight: 2 },
   { cat: 'Geography of Central Asia',    region: 'East/Central Asia', type: 'Geography', weight: 2 },
   { cat: 'Tian Shan',                    region: 'East/Central Asia', type: 'Geography', weight: 2 },
   { cat: 'Rivers of Asia',               region: 'East/Central Asia', type: 'Geography', weight: 2 },
+  { cat: 'Geography of China',           region: 'East/Central Asia', type: 'Geography', weight: 2 },
+  { cat: 'Geography of Japan',           region: 'East/Central Asia', type: 'Geography', weight: 1 },
+  { cat: 'Islands of Japan',             region: 'East/Central Asia', type: 'Geography', weight: 1 },
 
-  // Americas (~16)
+  // Americas (~26)
   { cat: 'Inca Empire',                  region: 'Americas', type: 'History',   weight: 3 },
   { cat: 'Maya peoples',                 region: 'Americas', type: 'History',   weight: 3 },
   { cat: 'Aztec Empire',                 region: 'Americas', type: 'History',   weight: 3 },
+  { cat: 'History of South America',     region: 'Americas', type: 'History',   weight: 4 },
+  { cat: 'History of Central America',   region: 'Americas', type: 'History',   weight: 2 },
+  { cat: 'History of Mexico',            region: 'Americas', type: 'History',   weight: 1 },
+  { cat: 'History of Peru',              region: 'Americas', type: 'History',   weight: 1 },
   { cat: 'Geography of South America',   region: 'Americas', type: 'Geography', weight: 2 },
   { cat: 'Geography of Central America', region: 'Americas', type: 'Geography', weight: 2 },
   { cat: 'Andes',                        region: 'Americas', type: 'Geography', weight: 2 },
   { cat: 'Amazon River',                 region: 'Americas', type: 'Geography', weight: 1 },
+  { cat: 'Geography of Mexico',          region: 'Americas', type: 'Geography', weight: 2 },
 
-  // Global Geography (~14) — no regional bias
+  // Global Geography (~23) — no regional bias
   { cat: 'Mountain ranges',              region: 'Global Geography', type: 'Geography', weight: 3 },
   { cat: 'International straits',        region: 'Global Geography', type: 'Geography', weight: 3 },
   { cat: 'World Heritage Sites',         region: 'Global Geography', type: 'Geography', weight: 4 },
   { cat: 'Oceans',                       region: 'Global Geography', type: 'Geography', weight: 4 },
+  { cat: 'Deserts',                      region: 'Global Geography', type: 'Geography', weight: 2 },
+  { cat: 'Islands',                      region: 'Global Geography', type: 'Geography', weight: 2 },
+  { cat: 'Volcanoes',                    region: 'Global Geography', type: 'Geography', weight: 2 },
+  { cat: 'Lakes',                        region: 'Global Geography', type: 'Geography', weight: 2 },
+  { cat: 'Waterfalls',                   region: 'Global Geography', type: 'Geography', weight: 1 },
 
-  // Oceania (~7)
+  // Oceania (~9)
   { cat: 'History of Polynesia',         region: 'Oceania', type: 'History',   weight: 2 },
   { cat: 'Māori culture',                region: 'Oceania', type: 'History',   weight: 2 },
+  { cat: 'History of Oceania',           region: 'Oceania', type: 'History',   weight: 2 },
   { cat: 'Geography of Oceania',         region: 'Oceania', type: 'Geography', weight: 3 },
 
-  // Europe (~5) — Byzantine, Rome, Greece only
+  // Europe (~5) — Byzantine, Rome, Greece only. Do not add categories here.
   { cat: 'Byzantine Empire',             region: 'Europe', type: 'History', weight: 2 },
   { cat: 'Roman Empire',                 region: 'Europe', type: 'History', weight: 2 },
   { cat: 'Ancient Greece',               region: 'Europe', type: 'History', weight: 1 },
@@ -144,7 +203,10 @@ story nobody has told you yet.
 Your questions span the full breadth of human civilisation — Chola dynasty,
 Roman Empire, Ibn Battuta, Indus Valley, all equal. You actively resist the
 gravitational pull of Western-centric history, because the best stories are
-usually the ones people haven't heard yet.
+usually the ones people haven't heard yet. The same instinct applies to
+whoever history tends to leave out of the frame — when the material genuinely
+centers a queen, scholar, trader, or general who happens to be a woman, tell
+her story rather than reaching past her for a more familiar king.
 
 You never just state a fact and ask about it — you set a scene, plant a
 small mystery, and let the question itself be the reveal. You delight in
