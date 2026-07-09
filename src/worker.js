@@ -30,25 +30,29 @@ const EXCLUDED_TITLE_PREFIXES = ['List of', 'Timeline of', 'Index of', 'Wikipedi
 // narrow ones give a category real texture, broad ones stop the same 5-6
 // empires from being the only thing that ever gets asked about. Europe is
 // capped intentionally and should not gain new categories.
+// `broad: true` marks categories likely to surface widely-recognized topics (umbrella
+// national/regional categories, iconic empires, global geography) rather than a niche
+// dynasty or a single obscure site. Accessible slots draw from broad categories only;
+// challenging slots draw from the full pool, exactly as before.
 const CATEGORY_POOL = [
   // South Asia (~52)
   { cat: 'Chola dynasty',                region: 'South Asia', type: 'History',   weight: 4 },
   { cat: 'Maurya Empire',                region: 'South Asia', type: 'History',   weight: 4 },
-  { cat: 'Mughal Empire',                region: 'South Asia', type: 'History',   weight: 4 },
+  { cat: 'Mughal Empire',                region: 'South Asia', type: 'History',   weight: 4, broad: true },
   { cat: 'Gupta Empire',                 region: 'South Asia', type: 'History',   weight: 3 },
   { cat: 'Vijayanagara Empire',          region: 'South Asia', type: 'History',   weight: 3 },
   { cat: 'Indus Valley Civilisation',    region: 'South Asia', type: 'History',   weight: 3 },
   { cat: 'Vedic period',                 region: 'South Asia', type: 'History',   weight: 2 },
   { cat: 'Maratha Empire',               region: 'South Asia', type: 'History',   weight: 3 },
   { cat: 'Sikh Empire',                  region: 'South Asia', type: 'History',   weight: 2 },
-  { cat: 'Indian independence movement', region: 'South Asia', type: 'History',   weight: 3 },
+  { cat: 'Indian independence movement', region: 'South Asia', type: 'History',   weight: 3, broad: true },
   { cat: 'Bengal Sultanate',             region: 'South Asia', type: 'History',   weight: 1 },
-  { cat: 'Geography of India',           region: 'South Asia', type: 'Geography', weight: 3 },
+  { cat: 'Geography of India',           region: 'South Asia', type: 'Geography', weight: 3, broad: true },
   { cat: 'Rivers of India',              region: 'South Asia', type: 'Geography', weight: 2 },
   { cat: 'Mountains of India',           region: 'South Asia', type: 'Geography', weight: 2 },
-  { cat: 'World Heritage Sites in India',region: 'South Asia', type: 'Geography', weight: 4 },
-  { cat: 'Geography of South Asia',      region: 'South Asia', type: 'Geography', weight: 2 },
-  { cat: 'Himalayas',                    region: 'South Asia', type: 'Geography', weight: 3 },
+  { cat: 'World Heritage Sites in India',region: 'South Asia', type: 'Geography', weight: 4, broad: true },
+  { cat: 'Geography of South Asia',      region: 'South Asia', type: 'Geography', weight: 2, broad: true },
+  { cat: 'Himalayas',                    region: 'South Asia', type: 'Geography', weight: 3, broad: true },
   { cat: 'Islands of India',             region: 'South Asia', type: 'Geography', weight: 3 },
   { cat: 'Western Ghats',                region: 'South Asia', type: 'Geography', weight: 1 },
 
@@ -56,93 +60,99 @@ const CATEGORY_POOL = [
   { cat: 'Mali Empire',                  region: 'Africa', type: 'History',   weight: 4 },
   { cat: 'Kingdom of Kush',              region: 'Africa', type: 'History',   weight: 4 },
   { cat: 'Ethiopian Empire',             region: 'Africa', type: 'History',   weight: 3 },
-  { cat: 'Ancient Egypt',                region: 'Africa', type: 'History',   weight: 4 },
+  { cat: 'Ancient Egypt',                region: 'Africa', type: 'History',   weight: 4, broad: true },
   { cat: 'Swahili people',               region: 'Africa', type: 'History',   weight: 3 },
   { cat: 'Great Zimbabwe',               region: 'Africa', type: 'History',   weight: 3 },
-  { cat: 'History of Africa',            region: 'Africa', type: 'History',   weight: 3 },
-  { cat: 'History of West Africa',       region: 'Africa', type: 'History',   weight: 2 },
-  { cat: 'History of North Africa',      region: 'Africa', type: 'History',   weight: 2 },
-  { cat: 'History of East Africa',       region: 'Africa', type: 'History',   weight: 1 },
+  { cat: 'History of Africa',            region: 'Africa', type: 'History',   weight: 3, broad: true },
+  { cat: 'History of West Africa',       region: 'Africa', type: 'History',   weight: 2, broad: true },
+  { cat: 'History of North Africa',      region: 'Africa', type: 'History',   weight: 2, broad: true },
+  { cat: 'History of East Africa',       region: 'Africa', type: 'History',   weight: 1, broad: true },
   { cat: 'Kingdom of Aksum',             region: 'Africa', type: 'History',   weight: 2 },
   { cat: 'Sokoto Caliphate',             region: 'Africa', type: 'History',   weight: 2 },
   { cat: 'Nubia',                        region: 'Africa', type: 'History',   weight: 2 },
   { cat: 'Ashanti Empire',               region: 'Africa', type: 'History',   weight: 1 },
-  { cat: 'Decolonisation of Africa',     region: 'Africa', type: 'History',   weight: 1 },
+  { cat: 'Decolonisation of Africa',     region: 'Africa', type: 'History',   weight: 1, broad: true },
   { cat: 'African queens',               region: 'Africa', type: 'History',   weight: 2 },
-  { cat: 'Geography of Africa',          region: 'Africa', type: 'Geography', weight: 2 },
+  { cat: 'Geography of Africa',          region: 'Africa', type: 'Geography', weight: 2, broad: true },
   { cat: 'Rivers of Africa',             region: 'Africa', type: 'Geography', weight: 2 },
   { cat: 'Mountains of Africa',          region: 'Africa', type: 'Geography', weight: 1 },
-  { cat: 'World Heritage Sites in Africa',region: 'Africa', type: 'Geography', weight: 2 },
-  { cat: 'Great Rift Valley',            region: 'Africa', type: 'Geography', weight: 2 },
+  { cat: 'World Heritage Sites in Africa',region: 'Africa', type: 'Geography', weight: 2, broad: true },
+  { cat: 'Great Rift Valley',            region: 'Africa', type: 'Geography', weight: 2, broad: true },
   { cat: 'Islands of Africa',            region: 'Africa', type: 'Geography', weight: 1 },
 
   // MENA (~35)
-  { cat: 'Islamic Golden Age',           region: 'MENA', type: 'History',   weight: 4 },
+  { cat: 'Islamic Golden Age',           region: 'MENA', type: 'History',   weight: 4, broad: true },
   { cat: 'Achaemenid Empire',            region: 'MENA', type: 'History',   weight: 3 },
-  { cat: 'Ottoman Empire',               region: 'MENA', type: 'History',   weight: 3 },
+  { cat: 'Ottoman Empire',               region: 'MENA', type: 'History',   weight: 3, broad: true },
   { cat: 'Abbasid Caliphate',            region: 'MENA', type: 'History',   weight: 3 },
-  { cat: 'Ancient Mesopotamia',          region: 'MENA', type: 'History',   weight: 3 },
+  { cat: 'Ancient Mesopotamia',          region: 'MENA', type: 'History',   weight: 3, broad: true },
   { cat: 'Islamic art',                  region: 'MENA', type: 'History',   weight: 2 },
   { cat: 'Arabic literature',            region: 'MENA', type: 'History',   weight: 2 },
   { cat: 'Fatimid Caliphate',            region: 'MENA', type: 'History',   weight: 1 },
   { cat: 'Safavid dynasty',              region: 'MENA', type: 'History',   weight: 2 },
   { cat: 'Umayyad Caliphate',            region: 'MENA', type: 'History',   weight: 1 },
   { cat: 'Mamluk Sultanate',             region: 'MENA', type: 'History',   weight: 1 },
-  { cat: 'History of Iran',              region: 'MENA', type: 'History',   weight: 2 },
-  { cat: 'Geography of the Middle East', region: 'MENA', type: 'Geography', weight: 3 },
+  { cat: 'History of Iran',              region: 'MENA', type: 'History',   weight: 2, broad: true },
+  { cat: 'Geography of the Middle East', region: 'MENA', type: 'Geography', weight: 3, broad: true },
   { cat: 'Rivers of Iran',               region: 'MENA', type: 'Geography', weight: 3 },
-  { cat: 'World Heritage Sites in Iran', region: 'MENA', type: 'Geography', weight: 2 },
+  { cat: 'World Heritage Sites in Iran', region: 'MENA', type: 'Geography', weight: 2, broad: true },
 
   // SE Asia (~29)
-  { cat: 'Khmer Empire',                 region: 'SE Asia', type: 'History',   weight: 4 },
+  { cat: 'Khmer Empire',                 region: 'SE Asia', type: 'History',   weight: 4, broad: true },
   { cat: 'Majapahit',                    region: 'SE Asia', type: 'History',   weight: 3 },
   { cat: 'Srivijaya',                    region: 'SE Asia', type: 'History',   weight: 3 },
-  { cat: 'History of Southeast Asia',    region: 'SE Asia', type: 'History',   weight: 3 },
-  { cat: 'History of Indonesia',         region: 'SE Asia', type: 'History',   weight: 1 },
-  { cat: 'History of Vietnam',           region: 'SE Asia', type: 'History',   weight: 1 },
-  { cat: 'History of Thailand',          region: 'SE Asia', type: 'History',   weight: 2 },
-  { cat: 'History of Cambodia',          region: 'SE Asia', type: 'History',   weight: 1 },
-  { cat: 'Geography of Southeast Asia',  region: 'SE Asia', type: 'Geography', weight: 3 },
-  { cat: 'Mekong',                       region: 'SE Asia', type: 'Geography', weight: 3 },
-  { cat: 'World Heritage Sites in Indonesia', region: 'SE Asia', type: 'Geography', weight: 3 },
+  { cat: 'History of Southeast Asia',    region: 'SE Asia', type: 'History',   weight: 3, broad: true },
+  { cat: 'History of Indonesia',         region: 'SE Asia', type: 'History',   weight: 1, broad: true },
+  { cat: 'History of Vietnam',           region: 'SE Asia', type: 'History',   weight: 1, broad: true },
+  { cat: 'History of Thailand',          region: 'SE Asia', type: 'History',   weight: 2, broad: true },
+  { cat: 'History of Cambodia',          region: 'SE Asia', type: 'History',   weight: 1, broad: true },
+  { cat: 'Geography of Southeast Asia',  region: 'SE Asia', type: 'Geography', weight: 3, broad: true },
+  { cat: 'Mekong',                       region: 'SE Asia', type: 'Geography', weight: 3, broad: true },
+  { cat: 'World Heritage Sites in Indonesia', region: 'SE Asia', type: 'Geography', weight: 3, broad: true },
   { cat: 'Islands of Indonesia',         region: 'SE Asia', type: 'Geography', weight: 2 },
 
   // East/Central Asia (~32)
   { cat: 'Tang dynasty',                 region: 'East/Central Asia', type: 'History',   weight: 3 },
   { cat: 'Song dynasty',                 region: 'East/Central Asia', type: 'History',   weight: 3 },
-  { cat: 'Mongol Empire',                region: 'East/Central Asia', type: 'History',   weight: 4 },
-  { cat: 'History of China',             region: 'East/Central Asia', type: 'History',   weight: 2 },
-  { cat: 'History of Korea',             region: 'East/Central Asia', type: 'History',   weight: 3 },
-  { cat: 'History of Central Asia',      region: 'East/Central Asia', type: 'History',   weight: 3 },
-  { cat: 'History of Mongolia',          region: 'East/Central Asia', type: 'History',   weight: 1 },
-  { cat: 'History of Japan',             region: 'East/Central Asia', type: 'History',   weight: 1 },
-  { cat: 'Geography of East Asia',       region: 'East/Central Asia', type: 'Geography', weight: 2 },
-  { cat: 'Geography of Central Asia',    region: 'East/Central Asia', type: 'Geography', weight: 2 },
+  { cat: 'Mongol Empire',                region: 'East/Central Asia', type: 'History',   weight: 4, broad: true },
+  { cat: 'History of China',             region: 'East/Central Asia', type: 'History',   weight: 2, broad: true },
+  { cat: 'History of Korea',             region: 'East/Central Asia', type: 'History',   weight: 3, broad: true },
+  { cat: 'History of Central Asia',      region: 'East/Central Asia', type: 'History',   weight: 3, broad: true },
+  { cat: 'History of Mongolia',          region: 'East/Central Asia', type: 'History',   weight: 1, broad: true },
+  { cat: 'History of Japan',             region: 'East/Central Asia', type: 'History',   weight: 1, broad: true },
+  { cat: 'Geography of East Asia',       region: 'East/Central Asia', type: 'Geography', weight: 2, broad: true },
+  { cat: 'Geography of Central Asia',    region: 'East/Central Asia', type: 'Geography', weight: 2, broad: true },
   { cat: 'Tian Shan',                    region: 'East/Central Asia', type: 'Geography', weight: 2 },
   { cat: 'Rivers of Asia',               region: 'East/Central Asia', type: 'Geography', weight: 2 },
-  { cat: 'Geography of China',           region: 'East/Central Asia', type: 'Geography', weight: 2 },
-  { cat: 'Geography of Japan',           region: 'East/Central Asia', type: 'Geography', weight: 1 },
+  { cat: 'Geography of China',           region: 'East/Central Asia', type: 'Geography', weight: 2, broad: true },
+  { cat: 'Geography of Japan',           region: 'East/Central Asia', type: 'Geography', weight: 1, broad: true },
   { cat: 'Islands of Japan',             region: 'East/Central Asia', type: 'Geography', weight: 1 },
 
   // Americas (~26)
-  { cat: 'Inca Empire',                  region: 'Americas', type: 'History',   weight: 3 },
-  { cat: 'Maya peoples',                 region: 'Americas', type: 'History',   weight: 3 },
-  { cat: 'Aztec Empire',                 region: 'Americas', type: 'History',   weight: 3 },
-  { cat: 'History of South America',     region: 'Americas', type: 'History',   weight: 4 },
-  { cat: 'History of Central America',   region: 'Americas', type: 'History',   weight: 2 },
-  { cat: 'History of Mexico',            region: 'Americas', type: 'History',   weight: 1 },
-  { cat: 'History of Peru',              region: 'Americas', type: 'History',   weight: 1 },
-  { cat: 'Geography of South America',   region: 'Americas', type: 'Geography', weight: 2 },
-  { cat: 'Geography of Central America', region: 'Americas', type: 'Geography', weight: 2 },
-  { cat: 'Andes',                        region: 'Americas', type: 'Geography', weight: 2 },
-  { cat: 'Amazon River',                 region: 'Americas', type: 'Geography', weight: 1 },
-  { cat: 'Geography of Mexico',          region: 'Americas', type: 'Geography', weight: 2 },
+  { cat: 'Inca Empire',                  region: 'Americas', type: 'History',   weight: 3, broad: true },
+  { cat: 'Maya peoples',                 region: 'Americas', type: 'History',   weight: 3, broad: true },
+  { cat: 'Aztec Empire',                 region: 'Americas', type: 'History',   weight: 3, broad: true },
+  { cat: 'History of South America',     region: 'Americas', type: 'History',   weight: 4, broad: true },
+  { cat: 'History of Central America',   region: 'Americas', type: 'History',   weight: 2, broad: true },
+  { cat: 'History of Mexico',            region: 'Americas', type: 'History',   weight: 1, broad: true },
+  { cat: 'History of Peru',              region: 'Americas', type: 'History',   weight: 1, broad: true },
+  { cat: 'Geography of South America',   region: 'Americas', type: 'Geography', weight: 2, broad: true },
+  { cat: 'Geography of Central America', region: 'Americas', type: 'Geography', weight: 2, broad: true },
+  { cat: 'Andes',                        region: 'Americas', type: 'Geography', weight: 2, broad: true },
+  { cat: 'Amazon River',                 region: 'Americas', type: 'Geography', weight: 1, broad: true },
+  { cat: 'Geography of Mexico',          region: 'Americas', type: 'Geography', weight: 2, broad: true },
 
-  // Global Geography (~23) — no regional bias
+  // Global Geography (~25) — no regional bias
+  // NOTE: several bare top-level categories here (Deserts, Islands, Volcanoes, Lakes,
+  // Waterfalls, World Heritage Sites) are mostly generic/definitional articles ("Lava
+  // cave", "Cabbeling", "Reverse waterfall") or unrelated noise (car rallies), not
+  // specific famous places — verified live and deliberately NOT marked broad. Kept in
+  // the pool for challenging-slot variety, just not relied on for "easy".
   { cat: 'Mountain ranges',              region: 'Global Geography', type: 'Geography', weight: 3 },
-  { cat: 'International straits',        region: 'Global Geography', type: 'Geography', weight: 3 },
+  { cat: 'Seven Summits',                region: 'Global Geography', type: 'Geography', weight: 2, broad: true },
+  { cat: 'International straits',        region: 'Global Geography', type: 'Geography', weight: 3, broad: true },
   { cat: 'World Heritage Sites',         region: 'Global Geography', type: 'Geography', weight: 4 },
-  { cat: 'Oceans',                       region: 'Global Geography', type: 'Geography', weight: 4 },
+  { cat: 'Oceans',                       region: 'Global Geography', type: 'Geography', weight: 4, broad: true },
   { cat: 'Deserts',                      region: 'Global Geography', type: 'Geography', weight: 2 },
   { cat: 'Islands',                      region: 'Global Geography', type: 'Geography', weight: 2 },
   { cat: 'Volcanoes',                    region: 'Global Geography', type: 'Geography', weight: 2 },
@@ -151,14 +161,14 @@ const CATEGORY_POOL = [
 
   // Oceania (~9)
   { cat: 'History of Polynesia',         region: 'Oceania', type: 'History',   weight: 2 },
-  { cat: 'Māori culture',                region: 'Oceania', type: 'History',   weight: 2 },
-  { cat: 'History of Oceania',           region: 'Oceania', type: 'History',   weight: 2 },
-  { cat: 'Geography of Oceania',         region: 'Oceania', type: 'Geography', weight: 3 },
+  { cat: 'Māori culture',                region: 'Oceania', type: 'History',   weight: 2, broad: true },
+  { cat: 'History of Oceania',           region: 'Oceania', type: 'History',   weight: 2, broad: true },
+  { cat: 'Geography of Oceania',         region: 'Oceania', type: 'Geography', weight: 3, broad: true },
 
   // Europe (~5) — Byzantine, Rome, Greece only. Do not add categories here.
-  { cat: 'Byzantine Empire',             region: 'Europe', type: 'History', weight: 2 },
-  { cat: 'Roman Empire',                 region: 'Europe', type: 'History', weight: 2 },
-  { cat: 'Ancient Greece',               region: 'Europe', type: 'History', weight: 1 },
+  { cat: 'Byzantine Empire',             region: 'Europe', type: 'History', weight: 2, broad: true },
+  { cat: 'Roman Empire',                 region: 'Europe', type: 'History', weight: 2, broad: true },
+  { cat: 'Ancient Greece',               region: 'Europe', type: 'History', weight: 1, broad: true },
 ];
 
 // ── Daily rotating thread, seeded by date so it's the same for all players all day ──
@@ -180,14 +190,16 @@ function pickDailyThread(date) {
   return DAILY_THREADS[idx];
 }
 
-// ── Question slots — 3 accessible (Q1-3), 7 challenging (Q4-10) ──────────────
+// ── Question slots — 6 accessible (Q1-6, 3 History + 3 Geography, sourced from each
+// region's most widely-recognized categories), 4 challenging (Q7-10, 2 History + 2
+// Geography, sourced from the full category depth exactly as before) ────────────────
 const TOPIC_SLOTS = [
   { label: 'History',   difficulty: 'accessible'  },
   { label: 'Geography', difficulty: 'accessible'  },
   { label: 'History',   difficulty: 'accessible'  },
-  { label: 'Geography', difficulty: 'challenging' },
-  { label: 'History',   difficulty: 'challenging' },
-  { label: 'Geography', difficulty: 'challenging' },
+  { label: 'Geography', difficulty: 'accessible'  },
+  { label: 'History',   difficulty: 'accessible'  },
+  { label: 'Geography', difficulty: 'accessible'  },
   { label: 'History',   difficulty: 'challenging' },
   { label: 'Geography', difficulty: 'challenging' },
   { label: 'History',   difficulty: 'challenging' },
@@ -265,9 +277,32 @@ const ACCURACY_RULES = `ACCURACY:
 - The correct answer must be unambiguously correct — not a matter of
   active scholarly debate.`;
 
-const ACCESSIBLE_DIFFICULTY = `This should be one of the more accessible questions — something
-a curious adult with reasonable general knowledge would likely get right.
-Still interesting, not trivial.`;
+const CONTENT_TONE_RULES = `TONE: This is a warm, delightful daily game, not a dark-history quiz.
+If a given article's central subject is a mass atrocity, genocide, massacre,
+or similarly traumatic tragedy, do not center a question on it. Pivot instead
+to a neutral, factual angle available in the same summary — geography,
+chronology, naming, culture — or, if nothing neutral is available, treat that
+as a signal the article is a poor fit and build the gentlest possible
+question from whatever context the summary gives you.`;
+
+const ACCESSIBLE_DIFFICULTY = `This should be genuinely easy — the kind of thing someone who
+half-remembers a school textbook or a documentary would get right without
+hesitating.
+
+The article you were given may itself be a minor or obscure topic — that's
+fine and expected, don't treat it as a constraint. Read the summary and find
+the most famous name, empire, place, or event *mentioned or implied within
+it* — the thing a general audience would actually recognize — and build the
+question around that, even if it isn't the article's own title. (A summary
+about an obscure local ruler will almost always mention the larger empire or
+period he belonged to; ask about that instead.) The obscure article is still
+the citation — wiki_topic doesn't change — but the question itself should
+never require knowing who or what the article's subject actually is.
+
+Prefer a well-known name, place, or event over a specific date, statistic,
+or minor figure. If you can't find any well-known angle at all in the
+summary provided, make the question as gentle and guessable as possible
+rather than reaching for an obscure detail.`;
 
 const CHALLENGING_DIFFICULTY = `This should be genuinely challenging — requiring real knowledge,
 careful reasoning, or familiarity with history beyond the standard Western
@@ -378,8 +413,12 @@ async function fetchRandomArticle() {
 }
 
 // ── Layers 1-3 combined: pick one article to seed a given slot type ──────────
-async function pickArticleForSlot(env, type, usedTopics, usedInBatch) {
-  const pool = CATEGORY_POOL.filter(c => c.type === type);
+// preferBroad narrows sourcing to the region's most widely-recognized categories (for
+// accessible slots) rather than its full depth (used for challenging slots, unchanged).
+async function pickArticleForSlot(env, type, usedTopics, usedInBatch, preferBroad = false) {
+  const typedPool = CATEGORY_POOL.filter(c => c.type === type);
+  const broadPool = typedPool.filter(c => c.broad);
+  const pool = (preferBroad && broadPool.length) ? broadPool : typedPool;
   const triedCategories = new Set();
 
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -447,6 +486,8 @@ ${EXPLANATION_RULES}
 
 ${ACCURACY_RULES}
 
+${CONTENT_TONE_RULES}
+
 DIFFICULTY:
 Accessible — ${ACCESSIBLE_DIFFICULTY}
 Challenging — ${CHALLENGING_DIFFICULTY}
@@ -494,14 +535,14 @@ function isValidQuestion(q) {
 async function pickArticlesForSlots(env, usedTopics) {
   const noSiblings = new Set();
   const articles = await Promise.all(
-    TOPIC_SLOTS.map(slot => pickArticleForSlot(env, slot.label, usedTopics, noSiblings))
+    TOPIC_SLOTS.map(slot => pickArticleForSlot(env, slot.label, usedTopics, noSiblings, slot.difficulty === 'accessible'))
   );
 
   const seen = new Set();
   for (let i = 0; i < articles.length; i++) {
     const key = articles[i].title.toLowerCase();
     if (seen.has(key)) {
-      articles[i] = await pickArticleForSlot(env, TOPIC_SLOTS[i].label, usedTopics, seen);
+      articles[i] = await pickArticleForSlot(env, TOPIC_SLOTS[i].label, usedTopics, seen, TOPIC_SLOTS[i].difficulty === 'accessible');
     }
     seen.add(articles[i].title.toLowerCase());
   }
