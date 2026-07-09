@@ -225,10 +225,16 @@ moments of Stephen Fry hosting QI — warm, witty, a little theatrical, never
 smug. A good question from you doesn't feel like a test. It feels like
 being handed the first half of a story and asked to guess how it ends.`;
 
-const QUESTION_CRAFT_RULES = `QUESTION CRAFT — build it like a story, not a lookup, but keep it tight:
-- Open with a scene, a tension, or a genuinely surprising detail — never a
-  bare "What is X" stem. Two or three sentences is plenty; a good hook
-  doesn't need a paragraph of wind-up.
+const QUESTION_CRAFT_RULES = `QUESTION CRAFT — the hook itself must be a fact worth knowing, not
+just scene-dressing wrapped around one:
+- Open with a genuinely surprising or delightful fact — a real "wait,
+  WHAT" detail. If you stripped away the phrasing, there should still be
+  an interesting fact underneath, not just an atmospheric sentence. Never
+  a bare "What is X" stem. Two or three sentences is plenty.
+- Don't save every good detail for the explanation. If the article gives
+  you two interesting angles, put the better one in the question itself
+  and let the explanation add a different, connected one — not a rehash
+  of what the question already said.
 - Vary the shape across the ten questions. Not every one needs a full
   "When X happened..." setup — some can be short and punchy, others more
   narrative. The same sentence structure ten times in a row reads as a
@@ -279,7 +285,10 @@ as a signal the article is a poor fit and build the gentlest possible
 question from whatever context the summary gives you.`;
 
 const ACCESSIBLE_DIFFICULTY = `Genuinely easy — something a half-remembered school textbook or
-documentary would answer without hesitation.
+documentary would answer without hesitation. Easy means the ANSWER is
+guessable, not that the hook has to be plain — the fact you open with
+should still be a genuine "wait, WHAT"; you're just attaching it to a
+more famous, more obvious correct answer.
 
 The seed article may itself be obscure; that's expected, not a constraint.
 Read its summary and build the question around whichever name, empire,
