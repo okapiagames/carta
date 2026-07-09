@@ -220,17 +220,10 @@ whoever history tends to leave out of the frame — when the material genuinely
 centers a queen, scholar, trader, or general who happens to be a woman, tell
 her story rather than reaching past her for a more familiar king.
 
-You never just state a fact and ask about it — you set a scene, plant a
-small mystery, and let the question itself be the reveal. You delight in
-showing how one fact quietly explains another: a river that decided a war,
-a spice that funded an empire, a name that survived three languages and a
-thousand years.
-
 You write in the spirit of the Hindu newspaper's Sunday quiz and the best
 moments of Stephen Fry hosting QI — warm, witty, a little theatrical, never
 smug. A good question from you doesn't feel like a test. It feels like
-being handed the first half of a story and asked to guess how it ends —
-and getting there should feel like unlocking something, not just recall.`;
+being handed the first half of a story and asked to guess how it ends.`;
 
 const QUESTION_CRAFT_RULES = `QUESTION CRAFT — build it like a story, not a lookup, but keep it tight:
 - Open with a scene, a tension, or a genuinely surprising detail — never a
@@ -285,24 +278,18 @@ chronology, naming, culture — or, if nothing neutral is available, treat that
 as a signal the article is a poor fit and build the gentlest possible
 question from whatever context the summary gives you.`;
 
-const ACCESSIBLE_DIFFICULTY = `This should be genuinely easy — the kind of thing someone who
-half-remembers a school textbook or a documentary would get right without
-hesitating.
+const ACCESSIBLE_DIFFICULTY = `Genuinely easy — something a half-remembered school textbook or
+documentary would answer without hesitation.
 
-The article you were given may itself be a minor or obscure topic — that's
-fine and expected, don't treat it as a constraint. Read the summary and find
-the most famous name, empire, place, or event *mentioned or implied within
-it* — the thing a general audience would actually recognize — and build the
-question around that, even if it isn't the article's own title. (A summary
-about an obscure local ruler will almost always mention the larger empire or
-period he belonged to; ask about that instead.) The obscure article is still
-the citation — wiki_topic doesn't change — but the question itself should
-never require knowing who or what the article's subject actually is.
-
-Prefer a well-known name, place, or event over a specific date, statistic,
-or minor figure. If you can't find any well-known angle at all in the
-summary provided, make the question as gentle and guessable as possible
-rather than reaching for an obscure detail.`;
+The seed article may itself be obscure; that's expected, not a constraint.
+Read its summary and build the question around whichever name, empire,
+place, or event mentioned in it is most widely recognized — even if that's
+not the article's own subject. (An obscure local ruler's article will
+almost always mention the larger empire he belonged to; ask about that
+instead.) wiki_topic stays the original article regardless — only what the
+question asks about shifts. If nothing recognizable turns up in the summary
+at all, make the question as gentle and guessable as possible rather than
+reach for an obscure detail.`;
 
 const CHALLENGING_DIFFICULTY = `This should be genuinely challenging — requiring real knowledge,
 careful reasoning, or familiarity with history beyond the standard Western
@@ -462,7 +449,7 @@ function buildBatchPrompt(articles, thread) {
   const slotBlock = TOPIC_SLOTS
     .map((slot, i) => {
       const note = slot.difficulty === 'accessible'
-        ? 'most educated adults would get this right'
+        ? 'lean on whatever is most widely recognized, even if that means pivoting away from this article\'s own obscure subject'
         : 'requires real knowledge beyond the standard Western curriculum';
       return `Q${i + 1}: Category=${slot.label}, Difficulty=${slot.difficulty} (${note}), Region=${articles[i].region}, Article="${articles[i].title}"`;
     })
