@@ -1387,7 +1387,24 @@ async function shareLinkedIn() {
   openWith(window.location.origin);
 }
 
-function shareInstagram() {
+async function shareInstagram() {
+  // Instagram has no public web API for posting a Story directly, but on mobile the
+  // native OS share sheet (same navigator.share() used for WhatsApp) usually lists
+  // Instagram as a target, and its own share extension lets the user pick "Story"
+  // right there — a real improvement over always downloading first.
+  const canvas = window._postcardCanvas;
+  if (canvas && navigator.share && navigator.canShare) {
+    try {
+      const blob = window._postcardBlob || await new Promise(r => canvas.toBlob(r, 'image/png'));
+      const file = new File([blob], `carta-${todayStr()}.png`, { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file] });
+        return;
+      }
+    } catch (e) {
+      if (e.name === 'AbortError') return; // user cancelled the share sheet — don't fall through
+    }
+  }
   downloadPostcard();
   toast('Image saved — share it to Instagram Stories!');
 }
