@@ -7,7 +7,7 @@
 
 A single Cloudflare Worker that serves **two editions** from the same codebase, branching on request hostname (`siteOf()` in `worker.js`):
 - `carta.okapiagames.com` — the global edition, all regions.
-- `carta.in.okapiagames.com` — the **Carta.In** edition: content restricted to the Indian subcontinent (South Asia category pool only, including the random-article fallback path), an indigo/ocean color theme, its own wordmark. Same KV namespace as the global edition, but every date-scoped key (`questions:`, `lock:`, `used_topics`, `scores:`, `player_count:`, `circuit_breaker_alerted:`) is prefixed `in:` so the two editions never collide on the same date.
+- `cartain.okapiagames.com` — the **Carta.In** edition: content restricted to the Indian subcontinent (South Asia category pool only, including the random-article fallback path), an indigo/ocean color theme, its own wordmark. Domain is spelled "cartain" (one label) rather than "carta.in" (two labels) — Cloudflare's free Universal SSL wildcard only covers one level of subdomain, and a two-label hostname would need the paid Advanced Certificate Manager or Total TLS. Same KV namespace as the global edition, but every date-scoped key (`questions:`, `lock:`, `used_topics`, `scores:`, `player_count:`, `circuit_breaker_alerted:`) is prefixed `in:` so the two editions never collide on the same date.
 
 Both editions:
 - Generate 10 fresh questions every day at midnight UTC via the Anthropic API
@@ -85,11 +85,13 @@ Confirm the routes in `wrangler.toml` — both editions are on the same `okapiag
 ```toml
 routes = [
   { pattern = "carta.okapiagames.com/*", zone_name = "okapiagames.com" },
-  { pattern = "carta.in.okapiagames.com/*", zone_name = "okapiagames.com" },
+  { pattern = "cartain.okapiagames.com/*", zone_name = "okapiagames.com" },
 ]
 ```
 
-Workers Routes only intercept traffic that already reaches Cloudflare's proxy for that hostname — if `carta.in.okapiagames.com` isn't reachable after deploying, add a proxied DNS record for it once (dashboard → DNS → Add record → CNAME → name `carta.in` → target `okapiagames.com` → Proxy status **Proxied**). Newer Wrangler versions sometimes auto-provision this on deploy; check the site before assuming you need to do this manually.
+Workers Routes only intercept traffic that already reaches Cloudflare's proxy for that hostname — if `cartain.okapiagames.com` isn't reachable after deploying, add a proxied DNS record for it once (dashboard → DNS → Add record → CNAME → name `cartain` → target `okapiagames.com` → Proxy status **Proxied**). Newer Wrangler versions sometimes auto-provision this on deploy; check the site before assuming you need to do this manually.
+
+`cartain` is deliberately one DNS label (not the two-label `carta.in`, which would read closer to the "Carta.In" wordmark) — Cloudflare's free Universal SSL certificate only covers the apex domain plus one level of wildcard subdomain (`*.okapiagames.com`). A two-label hostname like `carta.in.okapiagames.com` falls outside that wildcard and needs either the paid Advanced Certificate Manager or enabling Total TLS (SSL/TLS → Edge Certificates in the dashboard) to get HTTPS working — this was hit and worked around during the original rollout.
 
 ### Step 7 — Build and deploy
 

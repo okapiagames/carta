@@ -18,10 +18,13 @@ const CORS = {
 // User-Agent required by Wikimedia's API etiquette — requests without one get rate-limited.
 const WIKI_UA = 'Carta/1.0 (carta@okapiagames.com)';
 
-// ── Multi-edition support: carta.okapiagames.com (global) vs carta.in.okapiagames.com
-// (South Asia only, indigo/ocean theme) served from this same Worker ─────────────────
+// ── Multi-edition support: carta.okapiagames.com (global) vs cartain.okapiagames.com
+// ("Carta.In" wordmark, South Asia only, indigo/ocean theme) served from this same
+// Worker. Domain is "cartain" (one label) rather than "carta.in" (two labels) because
+// Cloudflare's free Universal SSL wildcard only covers one level of subdomain — a
+// two-label hostname would need the paid Advanced Certificate Manager or Total TLS. ──
 function siteOf(request) {
-  return new URL(request.url).hostname.startsWith('carta.in.') ? 'in' : 'global';
+  return new URL(request.url).hostname.startsWith('cartain.') ? 'in' : 'global';
 }
 
 // Per-site regions allowed when sourcing articles — null means unrestricted (global site).
@@ -436,7 +439,7 @@ async function fetchRandomArticle() {
 }
 
 // Region-scoped equivalent of fetchRandomArticle(), used instead of it whenever
-// allowedRegions is set — keeps the fallback path airtight (e.g. carta.in must never
+// allowedRegions is set — keeps the fallback path airtight (e.g. cartain must never
 // surface a truly random, potentially non-South-Asia article). Unions the cached member
 // lists of every CATEGORY_POOL entry in the allowed regions and samples from that.
 async function fetchRandomArticleFromRegions(env, allowedRegions, usedTopics, usedInBatch) {
@@ -928,7 +931,7 @@ export default {
     // Serve the game HTML (static, inlined below)
     if (path === '/' || path === '/index.html') {
       return edgeCached(request, ctx, 300, async () => {
-        // carta.in gets its own wordmark in the tags that matter for link previews —
+        // cartain gets its own wordmark in the tags that matter for link previews —
         // the rest of the page brands itself client-side via IS_IN_SITE/BRAND.
         const html = siteOf(request) === 'in'
           ? GAME_HTML

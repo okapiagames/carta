@@ -37,7 +37,7 @@
   --serif:var(--p-serif); --sans:var(--p-sans);
   --radius:3px;
 }
-/* ── carta.in edition — indigo/ocean theme. Applied via body.theme-in, toggled at
+/* ── cartain edition — indigo/ocean theme. Applied via body.theme-in, toggled at
    init based on hostname. Custom properties resolve var() against the element
    where they're DECLARED, not where they're consumed — so overriding just the
    primitives here would have no effect, since :root's semantic vars (--bg, --text,
@@ -450,9 +450,11 @@ body.lang-ja .explanation { font-family:'Noto Sans JP',sans-serif; line-height:1
 const SK = 'okapia_atlas_v1';
 const SK_LANG = 'carta_lang';
 
-// ── carta.in edition detection — South Asia-only content, indigo/ocean theme,
-// "Carta.In" wordmark. Same Worker/codebase serves both editions by hostname. ──
-const IS_IN_SITE = location.hostname.startsWith('carta.in.');
+// ── cartain edition detection — South Asia-only content, indigo/ocean theme,
+// "Carta.In" wordmark. Same Worker/codebase serves both editions by hostname. Domain
+// is "cartain" (one label) rather than "carta.in" (two) — Cloudflare's free Universal
+// SSL wildcard only covers one level of subdomain. ──
+const IS_IN_SITE = location.hostname.startsWith('cartain.');
 const BRAND = IS_IN_SITE ? 'Carta.In' : 'Carta';
 if (IS_IN_SITE) document.body.classList.add('theme-in');
 
@@ -1072,7 +1074,7 @@ async function generatePostcard({ score, total, verdict, results, date, image })
   // Left panel: warm cream like aged Japanese washi or cotton stock
   // Right panel: full-bleed photograph
   // Postcard is drawn on <canvas>, so it can't inherit the CSS theme — carries its
-  // own parallel ocean/indigo palette for the carta.in edition instead.
+  // own parallel ocean/indigo palette for the cartain edition instead.
   const P = IS_IN_SITE ? {
     paper:  '#eef5f7',   // cool sea-foam ground
     ink:    '#132436',   // deep ocean-indigo ink
