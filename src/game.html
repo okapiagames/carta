@@ -37,21 +37,26 @@
   --serif:var(--p-serif); --sans:var(--p-sans);
   --radius:3px;
 }
-/* ── cartain edition — indigo/ocean theme. Applied via body.theme-in, toggled at
-   init based on hostname. Custom properties resolve var() against the element
-   where they're DECLARED, not where they're consumed — so overriding just the
-   primitives here would have no effect, since :root's semantic vars (--bg, --text,
-   etc.) already resolved against :root's own primitives before inheriting down.
-   Redeclaring the semantic layer here too (pointing at the new primitives, which
-   correctly resolve locally since both live on this same body.theme-in rule) is
-   what actually re-themes the page. Keep this block's semantic half in sync with
-   :root's if that block's shape ever changes. ── */
+/* ── cartain edition — indigo/teal/green/gold theme. Applied via body.theme-in,
+   toggled at init based on hostname. Custom properties resolve var() against the
+   element where they're DECLARED, not where they're consumed — so overriding just
+   the primitives here would have no effect, since :root's semantic vars (--bg,
+   --text, etc.) already resolved against :root's own primitives before inheriting
+   down. Redeclaring the semantic layer here too (pointing at the new primitives,
+   which correctly resolve locally since both live on this same body.theme-in rule)
+   is what actually re-themes the page. Keep this block's semantic half in sync
+   with :root's if that block's shape ever changes.
+   --p-teal / --p-green are extra primitives only this edition defines — .tag and
+   .share-btn.teal reference them via var(--teal, var(--accent)) fallbacks, so the
+   global site (where --teal is never defined) renders exactly as before. ── */
 body.theme-in {
-  --p-ivory:#eef5f7; --p-ivory-2:#dce8ec;
-  --p-ink:#132436; --p-ink-soft:#2f4a5c;
-  --p-gold:#1f6f8b; --p-gold-bright:#2f93b3;
-  --p-vermilion:#c1452c;
-  --p-ink-rgb:19,36,54; --p-gold-rgb:31,111,139; --p-vermilion-rgb:193,69,44;
+  --p-ivory:#f1f1ef; --p-ivory-2:#e4e4e0;
+  --p-ink:#322d5e; --p-ink-soft:#5b5680;
+  --p-gold:#c99a2e; --p-gold-bright:#e0b83c;
+  --p-vermilion:#7a2035;
+  --p-ink-rgb:50,45,94; --p-gold-rgb:201,154,46; --p-vermilion-rgb:122,32,53;
+  --p-teal:#1f7a72; --p-teal-rgb:31,122,114;
+  --p-green:#2f7a4f; --p-green-rgb:47,122,79;
 
   --bg:var(--p-ivory); --surface:var(--p-ivory); --surface2:var(--p-ivory-2); --surface3:var(--p-ivory-2);
   --border:rgba(var(--p-ink-rgb),0.28); --border-gold:rgba(var(--p-gold-rgb),0.6);
@@ -59,8 +64,9 @@ body.theme-in {
   --accent:var(--p-gold); --accent-bg:rgba(var(--p-gold-rgb),0.10);
   --text:var(--p-ink); --text-muted:var(--p-ink-soft); --text-dim:var(--p-ink-soft);
   --on-accent:var(--p-ivory);
-  --correct:var(--p-ink); --correct-bg:rgba(var(--p-ink-rgb),0.04);
+  --correct:var(--p-green); --correct-bg:rgba(var(--p-green-rgb),0.08);
   --wrong:var(--p-vermilion); --wrong-bg:rgba(var(--p-vermilion-rgb),0.07);
+  --teal:var(--p-teal); --teal-bg:rgba(var(--p-teal-rgb),0.10);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{
@@ -138,7 +144,7 @@ body{
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(var(--p-gold-rgb),0.4);}70%{box-shadow:0 0 0 6px rgba(var(--p-gold-rgb),0);}}
 
 /* ── UTILITY ── */
-.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--accent);background:var(--accent-bg);padding:4px 11px;border-radius:100px;margin-bottom:14px;}
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--teal, var(--accent));background:var(--teal-bg, var(--accent-bg));padding:4px 11px;border-radius:100px;margin-bottom:14px;}
 .eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;}
 
 /* ── TITLE SCREEN ── */
@@ -223,8 +229,8 @@ body{
 .share-btn.primary:hover{background:var(--gold-bright);}
 .share-btn.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
 .share-btn.secondary:hover{border-color:var(--border-gold);color:var(--gold);}
-.share-btn.teal{background:var(--accent-bg);color:var(--accent);border:1px solid rgba(var(--p-gold-rgb),0.25);}
-.share-btn.teal:hover{background:rgba(var(--p-gold-rgb),0.2);}
+.share-btn.teal{background:var(--teal-bg, var(--accent-bg));color:var(--teal, var(--accent));border:1px solid rgba(var(--p-teal-rgb, var(--p-gold-rgb)),0.25);}
+.share-btn.teal:hover{background:rgba(var(--p-teal-rgb, var(--p-gold-rgb)),0.2);}
 .share-btn.whatsapp{background:rgba(37,211,102,0.12);color:#25d366;border:1px solid rgba(37,211,102,0.25);}
 .share-btn.whatsapp:hover{background:rgba(37,211,102,0.22);}
 .share-btn.linkedin{background:rgba(0,119,181,0.12);color:#4fa8d5;border:1px solid rgba(0,119,181,0.25);}
@@ -1074,17 +1080,18 @@ async function generatePostcard({ score, total, verdict, results, date, image })
   // Left panel: warm cream like aged Japanese washi or cotton stock
   // Right panel: full-bleed photograph
   // Postcard is drawn on <canvas>, so it can't inherit the CSS theme — carries its
-  // own parallel ocean/indigo palette for the cartain edition instead.
+  // own parallel indigo/teal/green/gold palette for the cartain edition instead,
+  // matching the body.theme-in CSS block's primitives.
   const P = IS_IN_SITE ? {
-    paper:  '#eef5f7',   // cool sea-foam ground
-    ink:    '#132436',   // deep ocean-indigo ink
-    gold:   '#1f6f8b',   // ocean teal (accent, replaces gold)
-    gMid:   '#17566d',   // darker teal
-    gDim:   '#5aa3bd',   // lighter teal for rules/details
-    mid:    '#4a6572',   // mid-tone blue-grey text
-    dim:    '#8aa0aa',   // secondary blue-grey text
-    ok:     '#2d6a4f',   // forest green (correct)
-    ng:     '#c1452c',   // terracotta-rust (wrong)
+    paper:  '#f1f1ef',   // neutral gray-ivory ground
+    ink:    '#322d5e',   // deep indigo
+    gold:   '#c99a2e',   // golden yellow accent
+    gMid:   '#8f6f1f',   // darker gold
+    gDim:   '#dcb54f',   // lighter gold for rules/details
+    mid:    '#5b5680',   // mid-tone indigo-grey text
+    dim:    '#8a86a8',   // secondary indigo-grey text
+    ok:     '#2f7a4f',   // green (correct)
+    ng:     '#7a2035',   // maroon (wrong)
   } : {
     paper:  '#f0e8d8',   // washi / cotton paper ground
     ink:    '#1c1620',   // deep indigo-black ink
