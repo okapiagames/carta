@@ -248,9 +248,6 @@ just scene-dressing wrapped around one:
   the other half should state the fact directly and ask the question with
   no scene to set. A plain, striking fact is just as strong a hook as a
   story — don't let narrative framing become the default.
-- Thread in one true, verifiable detail that deepens the world around the
-  answer — a place, a consequence, a link to another era or region —
-  without naming or hinting at the correct option.
 - State facts, don't rate them. No adjectives that pass judgment on the
   subject or event ("tragic," "impressive," "brilliant," "shocking") —
   describe what happened, not how the reader should feel about it.`;
