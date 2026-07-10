@@ -5,7 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 
 routes = [
   { pattern = "carta.okapiagames.com/*", zone_name = "okapiagames.com" },
-  { pattern = "carta.in.okapiagames.com/*", zone_name = "okapiagames.com" },
+  { pattern = "cartain.okapiagames.com/*", zone_name = "okapiagames.com" },
 ]
 
 # KV namespace — run: npx wrangler kv namespace create TRIVIA_KV
