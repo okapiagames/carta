@@ -240,8 +240,9 @@ just scene-dressing wrapped around one:
   a bare "What is X" stem. Two or three sentences is plenty.
 - Don't save every good detail for the explanation. If the article gives
   you two interesting angles, put the better one in the question itself
-  and let the explanation add a different, connected one — not a rehash
-  of what the question already said.
+  and let the explanation go deeper on the same person/place/event — a
+  layer further into the same thread, not a rehash of what the question
+  already said and not a jump to an unrelated angle.
 - Split roughly evenly across the ten questions: about half can use a
   short narrative setup ("When X happened...", "The year Y did Z..."),
   the other half should state the fact directly and ask the question with
@@ -266,10 +267,14 @@ No obviously absurd options. No joke answers. Options must be
 meaningfully different from each other — not just variations with
 different numbers.`;
 
-const EXPLANATION_RULES = `EXPLANATION: 2-3 sentences that complete the fact — the twist, the
-consequence, or a thread linking this fact to another place, era,
-invention, or person. The kind of detail that makes you want to keep
-reading, not a dry restatement of the question. State it plainly — don't
+const EXPLANATION_RULES = `EXPLANATION: 2-3 sentences that explain the question just answered — not
+a second, unrelated fact bolted on after it. Stay inside the same person,
+place, or event the question already set up, and go one layer deeper: the
+twist, the consequence, or the detail that makes the answer click into
+place. If the question was about Samarkand, the explanation is still about
+Samarkand — not a pivot to a different city, era, or figure that happens
+to share a topic. The kind of detail that makes you want to keep reading,
+not a dry restatement of the question. State it plainly — don't
 editorialize or tell the reader how impressive, surprising, or sad it is;
 the fact itself should do that work. Curiosity comes through in what you
 chose to include, not in commentary on it.`;
