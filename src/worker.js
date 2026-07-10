@@ -541,22 +541,27 @@ async function generateDailyBatch(env, date) {
   const usedTopics = await getUsedTopics(env);
 
   let lastError;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  const MAX_ATTEMPTS = 15;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
       const articles = await pickArticlesForSlots(env, usedTopics);
       const prompt = buildBatchPrompt(articles, thread);
       const questions = await callHaikuBatch(prompt, env.ANTHROPIC_API_KEY);
       const valid = questions.filter(isValidQuestion).filter(q => !hasAnswerLeak(q));
 
-      if (valid.length < 8) throw new Error(`Only ${valid.length}/10 questions passed validation`);
+      if (valid.length < TOPIC_SLOTS.length) {
+        console.warn(`generateDailyBatch: attempt ${attempt + 1}/${MAX_ATTEMPTS} only produced ${valid.length}/${TOPIC_SLOTS.length} valid questions, retrying`);
+        throw new Error(`Only ${valid.length}/${TOPIC_SLOTS.length} questions passed validation`);
+      }
 
-      await saveUsedTopics(env, valid.map(q => q.wiki_topic));
-      return { questions: valid, thread };
+      const shipped = valid.slice(0, TOPIC_SLOTS.length);
+      await saveUsedTopics(env, shipped.map(q => q.wiki_topic));
+      return { questions: shipped, thread };
     } catch (e) {
       lastError = e;
     }
   }
-  throw new Error(`Question generation failed after retry: ${lastError?.message}`);
+  throw new Error(`Question generation failed after ${MAX_ATTEMPTS} attempts: ${lastError?.message}`);
 }
 
 // ── Fetch a CC-licensed image from Wikimedia for a topic ─────────────────────
@@ -659,11 +664,11 @@ async function getDailyQuestions(env) {
   if (cached) return cached;
 
   // Stampede guard: only one Worker generates at a time.
-  // Others poll for up to 25 s then serve whatever is cached.
+  // Others poll for up to 45 s then serve whatever is cached.
   const lock = await env.TRIVIA_KV.get(lockKey);
   if (lock) {
     // Another instance is already generating — wait and return cache when ready
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 45; i++) {
       await new Promise(r => setTimeout(r, 1000));
       const ready = await env.TRIVIA_KV.get(cacheKey, 'json');
       if (ready) return ready;
@@ -671,8 +676,10 @@ async function getDailyQuestions(env) {
     throw new Error('Questions are being generated — please try again in a moment.');
   }
 
-  // Claim the lock for 90 seconds
-  await env.TRIVIA_KV.put(lockKey, '1', { expirationTtl: 90 });
+  // Claim the lock for 4 minutes — generateDailyBatch now retries up to 15
+  // times to land exactly 10 valid questions, so a single generation can
+  // take meaningfully longer than the old 90s budget.
+  await env.TRIVIA_KV.put(lockKey, '1', { expirationTtl: 240 });
 
   try {
     // Source articles (Wikipedia category pool) and batch-generate all 10 questions in one Haiku call
