@@ -238,14 +238,6 @@ body{
 .share-btn.instagram{background:rgba(225,48,108,0.1);color:#e1306c;border:1px solid rgba(225,48,108,0.22);}
 .share-btn.instagram:hover{background:rgba(225,48,108,0.2);}
 
-.challenge-link-box{
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:10px;padding:12px 14px;margin-bottom:16px;
-  display:flex;align-items:center;gap:8px;
-}
-.challenge-link-url{flex:1;font-size:12px;color:var(--text-dim);word-break:break-all;font-family:monospace;}
-.copy-link-btn{background:var(--gold);color:var(--on-accent);border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
-
 .name-input-row{display:flex;gap:8px;margin-bottom:16px;align-items:center;}
 .name-input{
   flex:1;background:var(--surface2);border:1.5px solid var(--border);
@@ -1006,7 +998,6 @@ async function showResults() {
 
   const emojis = results.map(r=>r?'🟩':'🟥').join('');
   const shareText = t().shareText(score, dailyQuestions.length, verdict, today, emojis);
-  const challengeUrl = buildChallengeUrl('', score, today);
   const savedName = (local.playerName || '').replace(/"/g, '&quot;');
 
   document.getElementById('results-card').innerHTML = `
@@ -1028,15 +1019,11 @@ async function showResults() {
     </div>
     <div id="rank-note" class="rank-note" style="display:none;"></div>
 
-    <div class="challenge-link-box">
-      <span class="challenge-link-url" id="challenge-url-text">${challengeUrl}</span>
-      <button class="copy-link-btn" onclick="copyChallenge()">Copy Link</button>
-    </div>
-
     <div class="share-row">
       <button class="share-btn primary" onclick="downloadPostcard()">⬇ Save Postcard</button>
       <button class="share-btn teal" onclick="shareNative('${encodeURIComponent(shareText)}')">📤 Share</button>
       <button class="share-btn secondary" onclick="copyShareText('${encodeURIComponent(shareText)}')">Copy Score</button>
+      <button class="share-btn secondary" onclick="copyChallenge()">🔗 Copy Challenge Link</button>
     </div>
     <div class="share-row">
       <button class="share-btn whatsapp" onclick="shareWhatsApp('${encodeURIComponent(shareText)}')">WhatsApp</button>
@@ -1046,8 +1033,6 @@ async function showResults() {
 
     <div style="display:flex;gap:8px;justify-content:center;margin-top:6px;flex-wrap:wrap;">
       <button class="share-btn secondary" onclick="goHome()">← Home</button>
-      <button class="share-btn secondary" onclick="showTab('leaderboard')">🏆 Leaderboard</button>
-      <button class="share-btn secondary" onclick="showTab('progress')">📈 Progress</button>
       <button class="share-btn secondary" onclick="playAgain()">🔁 Play Again</button>
     </div>`;
 
@@ -1324,7 +1309,6 @@ function buildChallengeUrl(name, sc, date) {
 function copyChallenge() {
   const name = document.getElementById('player-name')?.value.trim() || 'Someone';
   const url = buildChallengeUrl(name, score, todayStr());
-  document.getElementById('challenge-url-text').textContent = url;
   navigator.clipboard.writeText(url).then(() => toast('Challenge link copied!')).catch(() => toast('Copy failed'));
 }
 
