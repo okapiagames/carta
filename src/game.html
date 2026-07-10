@@ -65,7 +65,8 @@ body{
 .logo-text{display:flex;flex-direction:column;line-height:1.2;}
 .logo-top{font-family:var(--serif);font-size:15px;font-weight:700;color:var(--text);}
 .logo-bot{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-top:2px;}
-.header-date{font-size:13px;color:var(--text-muted);}
+.header-date{font-size:13px;color:var(--text-muted);white-space:nowrap;}
+@media(max-width:400px){.header-date{font-size:12px;}}
 
 /* ── NAV TABS ── */
 .nav-tabs{
@@ -139,7 +140,7 @@ body{
 
 /* ── QUESTION ── */
 .q-num{font-size:14px;color:var(--text-dim);margin-bottom:8px;font-weight:600;}
-.question-text{font-family:var(--sans);font-size:24px;font-weight:700;line-height:1.4;color:var(--text);margin-bottom:10px;}
+.question-text{font-family:var(--sans);font-size:20px;font-weight:600;line-height:1.4;color:var(--text);margin-bottom:10px;}
 .options{display:flex;flex-direction:column;gap:11px;}
 .option-btn{
   background:var(--surface2);border:2px solid var(--border);
@@ -742,7 +743,7 @@ let current = 0, score = 0, results = [], catScores = {}, isAnswered = false;
 (async () => {
   const d = new Date();
   document.getElementById('header-date').textContent =
-    d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+    d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 
   // Apply saved language
   setLanguage(currentLang);
@@ -977,7 +978,7 @@ async function showResults() {
     <div class="postcard-preview" id="postcard-wrap"></div>
 
     <div class="name-input-row">
-      <input class="name-input" id="player-name" placeholder="Your name (for leaderboard)" maxlength="28">
+      <input class="name-input" id="player-name" placeholder="Name for leaderboard" maxlength="28">
       <button class="submit-score-btn" onclick="submitScore()">Post Score</button>
     </div>
     <div id="rank-note" class="rank-note" style="display:none;"></div>
