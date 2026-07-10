@@ -578,6 +578,42 @@ async function generateDailyBatch(env, date) {
   throw new Error(`Question generation failed after retry: ${lastError?.message}`);
 }
 
+// ── Turn a raw Wikimedia image description into a short, readable caption ────
+// Commons descriptions are frequently multi-language ("English: ... Français:
+// ..."), carry citation markers, or are otherwise not fit to show as-is.
+function cleanCaption(raw, topic) {
+  if (!raw) return topic;
+
+  let text = raw
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
+    .replace(/\[[^\]]*\]/g, '')      // citation/footnote markers, e.g. [1], [citation needed]
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // Multi-language descriptions are concatenated as "English: ... Français: ...".
+  // Keep only the segment for the first language label present.
+  const labels = [...text.matchAll(/\b([A-Z][a-zA-Zà-ÿ]{2,20}):\s/g)];
+  if (labels.length >= 2) {
+    text = text.slice(labels[0].index + labels[0][0].length, labels[1].index).trim();
+  } else if (labels.length === 1 && labels[0].index === 0) {
+    text = text.slice(labels[0][0].length).trim();
+  }
+
+  text = text.replace(/^["'“”]+|["'“”]+$/g, '').trim();
+  if (!text || text.length < 4) return topic;
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+// Truncate at a word boundary instead of slicing mid-word.
+function truncateAtWord(text, max) {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trim() + '…';
+}
+
 // ── Fetch a CC-licensed image from Wikimedia for a topic ─────────────────────
 async function fetchWikiImage(topic) {
   try {
@@ -605,7 +641,7 @@ async function fetchWikiImage(topic) {
 
     const license = (ext.LicenseShortName?.value || '').toUpperCase();
     const author  = ext.Artist?.value?.replace(/<[^>]+>/g, '').trim() || 'Wikimedia Commons';
-    const desc    = ext.ImageDescription?.value?.replace(/<[^>]+>/g, '').trim() || topic;
+    const desc    = cleanCaption(ext.ImageDescription?.value, topic);
 
     // Only accept CC0, CC-BY, CC-BY-SA (any version). Reject NC, ND, fair use.
     const ok = ['CC0','CC BY','CC-BY','CC BY-SA','CC-BY-SA','PUBLIC DOMAIN'].some(p => license.startsWith(p));
@@ -613,8 +649,8 @@ async function fetchWikiImage(topic) {
 
     return {
       url:     imgUrl,
-      caption: desc.length > 80 ? desc.slice(0, 78) + '…' : desc,
-      author:  author.length > 60 ? author.slice(0, 58) + '…' : author,
+      caption: truncateAtWord(desc, 78),
+      author:  truncateAtWord(author, 58),
       license: ext.LicenseShortName?.value || license,
       topic,
     };
