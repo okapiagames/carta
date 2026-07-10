@@ -1366,9 +1366,25 @@ async function shareWhatsApp(encoded) {
   window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
 }
 
-function shareLinkedIn() {
-  const url = encodeURIComponent(window.location.origin);
-  window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + url, '_blank');
+async function shareLinkedIn() {
+  const openWith = (shareUrl) => window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(shareUrl), '_blank');
+  const canvas = window._postcardCanvas;
+  if (!canvas) { openWith(window.location.origin); return; }
+
+  // Upload the postcard and link LinkedIn's crawler at the /share/:id page instead of
+  // the bare homepage — that page's og:image is the actual postcard, so the preview
+  // LinkedIn renders shows it, not the generic static /og.png the homepage uses.
+  try {
+    const blob = window._postcardBlob || await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const dims = `w=${canvas.width}&h=${canvas.height}`;
+    const res = await fetch(`/api/share?${dims}`, { method: 'POST', body: blob, headers: { 'Content-Type': 'image/png' } });
+    if (res.ok) {
+      const { url: shareUrl } = await res.json();
+      openWith(shareUrl);
+      return;
+    }
+  } catch {}
+  openWith(window.location.origin);
 }
 
 function shareInstagram() {
