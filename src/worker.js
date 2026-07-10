@@ -1061,12 +1061,13 @@ export default {
       // Fall back to the common 2x-DPR postcard size if metadata is missing (older links).
       const imgW = parseInt(meta?.customMetadata?.w, 10) || 1800;
       const imgH = parseInt(meta?.customMetadata?.h, 10) || 1000;
+      const brand = siteOf(request) === 'in' ? 'Carta.In' : 'Carta';
       const html = `<!DOCTYPE html><html><head>
 <meta charset="utf-8">
-<title>Carta · Daily Atlas Trivia</title>
+<title>${brand} · Daily Atlas Trivia</title>
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Carta by Okapia Games">
-<meta property="og:title" content="Carta · Daily Atlas Trivia">
+<meta property="og:site_name" content="${brand} by Okapia Games">
+<meta property="og:title" content="${brand} · Daily Atlas Trivia">
 <meta property="og:description" content="Can you beat my score? Ten questions every day — history, geography, general knowledge.">
 <meta property="og:image" content="${imgUrl}">
 <meta property="og:image:type" content="image/png">
