@@ -5,12 +5,15 @@
 
 ### What you're deploying
 
-A single Cloudflare Worker that:
-- Serves the full game at `carta.okapiagames.com`
-- Generates 10 fresh questions every day at midnight UTC via the Anthropic API
-- Caches them in KV so every player gets the **same questions**
-- Stores scores in KV (daily leaderboard, TTL 7 days)
-- Generates shareable postcards client-side, uploads them to R2 for WhatsApp/Twitter link previews, and builds challenge links
+A single Cloudflare Worker that serves **two editions** from the same codebase, branching on request hostname (`siteOf()` in `worker.js`):
+- `carta.okapiagames.com` — the global edition, all regions.
+- `carta.in.okapiagames.com` — the **Carta.In** edition: content restricted to the Indian subcontinent (South Asia category pool only, including the random-article fallback path), an indigo/ocean color theme, its own wordmark. Same KV namespace as the global edition, but every date-scoped key (`questions:`, `lock:`, `used_topics`, `scores:`, `player_count:`, `circuit_breaker_alerted:`) is prefixed `in:` so the two editions never collide on the same date.
+
+Both editions:
+- Generate 10 fresh questions every day at midnight UTC via the Anthropic API
+- Cache them in KV so every player of that edition gets the **same questions**
+- Store scores in KV (daily leaderboard, TTL 7 days)
+- Generate shareable postcards client-side, upload them to R2 for WhatsApp/Twitter link previews, and build challenge links
 
 ---
 
@@ -75,13 +78,18 @@ npx wrangler secret put ANTHROPIC_API_KEY
 npx wrangler secret put GOOGLE_TRANSLATE_KEY   # optional — enables translated questions
 ```
 
-### Step 6 — Set your custom domain
+### Step 6 — Set your custom domain(s)
 
-Confirm the route in `wrangler.toml`:
+Confirm the routes in `wrangler.toml` — both editions are on the same `okapiagames.com` zone, so this is one Worker with two routes, not two deployments:
 
 ```toml
-routes = [{ pattern = "carta.okapiagames.com/*", zone_name = "okapiagames.com" }]
+routes = [
+  { pattern = "carta.okapiagames.com/*", zone_name = "okapiagames.com" },
+  { pattern = "carta.in.okapiagames.com/*", zone_name = "okapiagames.com" },
+]
 ```
+
+Workers Routes only intercept traffic that already reaches Cloudflare's proxy for that hostname — if `carta.in.okapiagames.com` isn't reachable after deploying, add a proxied DNS record for it once (dashboard → DNS → Add record → CNAME → name `carta.in` → target `okapiagames.com` → Proxy status **Proxied**). Newer Wrangler versions sometimes auto-provision this on deploy; check the site before assuming you need to do this manually.
 
 ### Step 7 — Build and deploy
 

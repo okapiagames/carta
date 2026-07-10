@@ -18,6 +18,22 @@ const CORS = {
 // User-Agent required by Wikimedia's API etiquette — requests without one get rate-limited.
 const WIKI_UA = 'Carta/1.0 (carta@okapiagames.com)';
 
+// ── Multi-edition support: carta.okapiagames.com (global) vs carta.in.okapiagames.com
+// (South Asia only, indigo/ocean theme) served from this same Worker ─────────────────
+function siteOf(request) {
+  return new URL(request.url).hostname.startsWith('carta.in.') ? 'in' : 'global';
+}
+
+// Per-site regions allowed when sourcing articles — null means unrestricted (global site).
+const SITE_REGIONS = { in: ['South Asia'], global: null };
+
+// Prefix date/site-scoped KV keys so the two editions never collide on the same key for
+// the same date. Wikipedia category-member cache and About translations are intentionally
+// left unprefixed — that data is identical across editions, no reason to fetch it twice.
+function siteKey(site, key) {
+  return site === 'in' ? `in:${key}` : key;
+}
+
 // Titles that are never valid question seeds (list/index/meta pages, not articles).
 const EXCLUDED_TITLE_PREFIXES = ['List of', 'Timeline of', 'Index of', 'Wikipedia:', 'Category:', 'Template:', 'File:'];
 
@@ -341,15 +357,16 @@ function hasAnswerLeak(q) {
 }
 
 // ── Layer 3: cross-day deduplication via KV `used_topics` ────────────────────
-async function getUsedTopics(env) {
-  const topics = await env.TRIVIA_KV.get('used_topics', 'json');
+async function getUsedTopics(env, site) {
+  const topics = await env.TRIVIA_KV.get(siteKey(site, 'used_topics'), 'json');
   return new Set((topics || []).map(t => t.toLowerCase()));
 }
 
-async function saveUsedTopics(env, newTitles) {
-  const existing = (await env.TRIVIA_KV.get('used_topics', 'json')) || [];
+async function saveUsedTopics(env, site, newTitles) {
+  const key = siteKey(site, 'used_topics');
+  const existing = (await env.TRIVIA_KV.get(key, 'json')) || [];
   const combined = [...existing, ...newTitles].slice(-140);
-  await env.TRIVIA_KV.put('used_topics', JSON.stringify(combined), { expirationTtl: 15 * 86400 });
+  await env.TRIVIA_KV.put(key, JSON.stringify(combined), { expirationTtl: 15 * 86400 });
 }
 
 // ── Weighted random pick from a category pool slice ──────────────────────────
@@ -418,11 +435,33 @@ async function fetchRandomArticle() {
   }
 }
 
+// Region-scoped equivalent of fetchRandomArticle(), used instead of it whenever
+// allowedRegions is set — keeps the fallback path airtight (e.g. carta.in must never
+// surface a truly random, potentially non-South-Asia article). Unions the cached member
+// lists of every CATEGORY_POOL entry in the allowed regions and samples from that.
+async function fetchRandomArticleFromRegions(env, allowedRegions, usedTopics, usedInBatch) {
+  const entries = CATEGORY_POOL.filter(c => allowedRegions.includes(c.region));
+  const memberLists = await Promise.all(entries.map(c => fetchCategoryMembers(env, c.cat)));
+  const allMembers = [...new Set(memberLists.flat())];
+  if (!allMembers.length) return null;
+
+  const shuffled = [...allMembers].sort(() => Math.random() - 0.5).slice(0, 15); // don't hammer the API indefinitely
+  for (const title of shuffled) {
+    if (usedTopics.has(title.toLowerCase()) || usedInBatch.has(title.toLowerCase())) continue;
+    const article = await fetchArticleSummary(title);
+    if (article) return article;
+  }
+  return null;
+}
+
 // ── Layers 1-3 combined: pick one article to seed a given slot type ──────────
 // preferBroad narrows sourcing to the region's most widely-recognized categories (for
 // accessible slots) rather than its full depth (used for challenging slots, unchanged).
-async function pickArticleForSlot(env, type, usedTopics, usedInBatch, preferBroad = false) {
-  const typedPool = CATEGORY_POOL.filter(c => c.type === type);
+// allowedRegions (array or null) restricts both the category pool AND the random-article
+// fallback to those regions — null preserves the original unrestricted global behavior.
+async function pickArticleForSlot(env, type, usedTopics, usedInBatch, preferBroad = false, allowedRegions = null) {
+  let typedPool = CATEGORY_POOL.filter(c => c.type === type);
+  if (allowedRegions) typedPool = typedPool.filter(c => allowedRegions.includes(c.region));
   const broadPool = typedPool.filter(c => c.broad);
   const pool = (preferBroad && broadPool.length) ? broadPool : typedPool;
   const triedCategories = new Set();
@@ -449,7 +488,13 @@ async function pickArticleForSlot(env, type, usedTopics, usedInBatch, preferBroa
     }
   }
 
-  // Category API blocked/empty for every attempted category — fall back to random summary.
+  // Category API blocked/empty for every attempted category — fall back to random summary,
+  // scoped to allowedRegions when set so the fallback can never leave the intended region.
+  if (allowedRegions) {
+    const random = await fetchRandomArticleFromRegions(env, allowedRegions, usedTopics, usedInBatch);
+    if (random) return { title: random.title, summary: random.summary, region: allowedRegions[0], type };
+    throw new Error(`Could not source a Wikipedia article for slot type ${type} within regions ${allowedRegions.join(',')}`);
+  }
   for (let i = 0; i < 5; i++) {
     const random = await fetchRandomArticle();
     if (random && !usedTopics.has(random.title.toLowerCase()) && !usedInBatch.has(random.title.toLowerCase())) {
@@ -538,32 +583,33 @@ function isValidQuestion(q) {
 // Sources all 10 slots concurrently (each pick is a handful of sequential Wikipedia
 // fetches, so doing this slot-by-slot would take 10x as long). A concurrent pick can't
 // see its siblings' choices, so any accidental duplicate titles are re-picked afterward.
-async function pickArticlesForSlots(env, usedTopics) {
+async function pickArticlesForSlots(env, usedTopics, allowedRegions) {
   const noSiblings = new Set();
   const articles = await Promise.all(
-    TOPIC_SLOTS.map(slot => pickArticleForSlot(env, slot.label, usedTopics, noSiblings, slot.difficulty === 'accessible'))
+    TOPIC_SLOTS.map(slot => pickArticleForSlot(env, slot.label, usedTopics, noSiblings, slot.difficulty === 'accessible', allowedRegions))
   );
 
   const seen = new Set();
   for (let i = 0; i < articles.length; i++) {
     const key = articles[i].title.toLowerCase();
     if (seen.has(key)) {
-      articles[i] = await pickArticleForSlot(env, TOPIC_SLOTS[i].label, usedTopics, seen, TOPIC_SLOTS[i].difficulty === 'accessible');
+      articles[i] = await pickArticleForSlot(env, TOPIC_SLOTS[i].label, usedTopics, seen, TOPIC_SLOTS[i].difficulty === 'accessible', allowedRegions);
     }
     seen.add(articles[i].title.toLowerCase());
   }
   return articles;
 }
 
-async function generateDailyBatch(env, date) {
+async function generateDailyBatch(env, date, site) {
   const thread = pickDailyThread(date);
-  const usedTopics = await getUsedTopics(env);
+  const usedTopics = await getUsedTopics(env, site);
+  const allowedRegions = SITE_REGIONS[site];
 
   let lastError;
   const MAX_ATTEMPTS = 15;
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
-      const articles = await pickArticlesForSlots(env, usedTopics);
+      const articles = await pickArticlesForSlots(env, usedTopics, allowedRegions);
       const prompt = buildBatchPrompt(articles, thread);
       const questions = await callHaikuBatch(prompt, env.ANTHROPIC_API_KEY);
       const valid = questions.filter(isValidQuestion).filter(q => !hasAnswerLeak(q));
@@ -574,7 +620,7 @@ async function generateDailyBatch(env, date) {
       }
 
       const shipped = valid.slice(0, TOPIC_SLOTS.length);
-      await saveUsedTopics(env, shipped.map(q => q.wiki_topic));
+      await saveUsedTopics(env, site, shipped.map(q => q.wiki_topic));
       return { questions: shipped, thread };
     } catch (e) {
       lastError = e;
@@ -709,10 +755,10 @@ async function translateQuestions(questions, apiKey) {
   return translations;
 }
 
-async function getDailyQuestions(env) {
+async function getDailyQuestions(env, site) {
   const date = todayUTC();
-  const cacheKey = `questions:${date}`;
-  const lockKey  = `lock:${date}`;
+  const cacheKey = siteKey(site, `questions:${date}`);
+  const lockKey  = siteKey(site, `lock:${date}`);
 
   // Serve from cache immediately if available
   const cached = await env.TRIVIA_KV.get(cacheKey, 'json');
@@ -738,7 +784,7 @@ async function getDailyQuestions(env) {
 
   try {
     // Source articles (Wikipedia category pool) and batch-generate all 10 questions in one Haiku call
-    const { questions: valid, thread } = await generateDailyBatch(env, date);
+    const { questions: valid, thread } = await generateDailyBatch(env, date, site);
 
     // Translate to all supported languages in parallel
     const translations = await translateQuestions(valid, env.GOOGLE_TRANSLATE_KEY);
@@ -766,7 +812,7 @@ async function getDailyQuestions(env) {
 }
 
 // ── Submit a score ────────────────────────────────────────────────────────────
-async function submitScore(env, body) {
+async function submitScore(env, site, body) {
   const { date, name, cats, results } = body;
   if (!date || !name || !Array.isArray(results) || results.length === 0 || results.length > 20) {
     return json({ error: 'Missing or invalid fields' }, 400);
@@ -778,7 +824,7 @@ async function submitScore(env, body) {
   const id = crypto.randomUUID().slice(0, 8);
   const entry = { id, name: name.slice(0, 32), score, cats, results, ts: Date.now() };
 
-  const boardKey = `scores:${date}`;
+  const boardKey = siteKey(site, `scores:${date}`);
   const existing = (await env.TRIVIA_KV.get(boardKey, 'json')) || [];
   existing.push(entry);
   // Keep top 100 by score
@@ -846,8 +892,8 @@ async function getAboutTranslations(env) {
 }
 
 // ── Get leaderboard ───────────────────────────────────────────────────────────
-async function getLeaderboard(env, date) {
-  const scores = (await env.TRIVIA_KV.get(`scores:${date}`, 'json')) || [];
+async function getLeaderboard(env, site, date) {
+  const scores = (await env.TRIVIA_KV.get(siteKey(site, `scores:${date}`), 'json')) || [];
   return json({ date, scores: scores.slice(0, 20) });
 }
 
@@ -881,11 +927,18 @@ export default {
 
     // Serve the game HTML (static, inlined below)
     if (path === '/' || path === '/index.html') {
-      return edgeCached(request, ctx, 300, async () =>
-        new Response(GAME_HTML, {
+      return edgeCached(request, ctx, 300, async () => {
+        // carta.in gets its own wordmark in the tags that matter for link previews —
+        // the rest of the page brands itself client-side via IS_IN_SITE/BRAND.
+        const html = siteOf(request) === 'in'
+          ? GAME_HTML
+              .replace('<title>Carta · Okapia Games</title>', '<title>Carta.In · Okapia Games</title>')
+              .replace('content="Carta · Okapia Games">', 'content="Carta.In · Okapia Games">')
+          : GAME_HTML;
+        return new Response(html, {
           headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS },
-        })
-      );
+        });
+      });
     }
 
     // GET/HEAD /og.png — default Open Graph preview image (for shares of the bare URL,
@@ -905,21 +958,23 @@ export default {
     if (path === '/api/questions' && request.method === 'GET') {
       return edgeCached(request, ctx, 300, async () => {
         try {
-          // Circuit breaker: counts Worker invocations (cache misses), not raw player count
-          const countKey = `player_count:${todayUTC()}`;
+          const site = siteOf(request);
+          // Circuit breaker: counts Worker invocations (cache misses), not raw player count.
+          // Tracked per-site so a spike on one edition can't trip the breaker for the other.
+          const countKey = siteKey(site, `player_count:${todayUTC()}`);
           const current = parseInt(await env.TRIVIA_KV.get(countKey) || '0');
           if (current >= 50000) {
             // Log once per day so it's visible in Cloudflare Worker Logs / `wrangler tail`,
             // without spamming a log line on every request for the rest of the day.
-            const alertKey = `circuit_breaker_alerted:${todayUTC()}`;
+            const alertKey = siteKey(site, `circuit_breaker_alerted:${todayUTC()}`);
             if (!(await env.TRIVIA_KV.get(alertKey))) {
-              console.warn(`Circuit breaker tripped: ${current} cache-miss invocations today (${todayUTC()})`);
+              console.warn(`Circuit breaker tripped (${site}): ${current} cache-miss invocations today (${todayUTC()})`);
               ctx.waitUntil(env.TRIVIA_KV.put(alertKey, '1', { expirationTtl: 48 * 3600 }));
             }
             return json({ error: "Carta is having an incredibly popular day — we've hit today's limit. Come back tomorrow!" }, 503);
           }
           await env.TRIVIA_KV.put(countKey, String(current + 1), { expirationTtl: 48 * 3600 });
-          const payload = await getDailyQuestions(env);
+          const payload = await getDailyQuestions(env, site);
           return json(payload);
         } catch (e) {
           return json({ error: e.message }, 500);
@@ -931,7 +986,7 @@ export default {
     if (path === '/api/score' && request.method === 'POST') {
       try {
         const body = await request.json();
-        return submitScore(env, body);
+        return submitScore(env, siteOf(request), body);
       } catch (e) {
         return json({ error: e.message }, 400);
       }
@@ -953,7 +1008,7 @@ export default {
     if (path === '/api/leaderboard' && request.method === 'GET') {
       return edgeCached(request, ctx, 60, async () => {
         const date = url.searchParams.get('date') || todayUTC();
-        return getLeaderboard(env, date);
+        return getLeaderboard(env, siteOf(request), date);
       });
     }
 
