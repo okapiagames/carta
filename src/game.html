@@ -963,6 +963,7 @@ async function showResults() {
   const emojis = results.map(r=>r?'🟩':'🟥').join('');
   const shareText = t().shareText(score, dailyQuestions.length, verdict, today, emojis);
   const challengeUrl = buildChallengeUrl('', score, today);
+  const savedName = (local.playerName || '').replace(/"/g, '&quot;');
 
   document.getElementById('results-card').innerHTML = `
     <div class="eyebrow">— ${today} —</div>
@@ -978,7 +979,7 @@ async function showResults() {
     <div class="postcard-preview" id="postcard-wrap"></div>
 
     <div class="name-input-row">
-      <input class="name-input" id="player-name" placeholder="Name for leaderboard" maxlength="28">
+      <input class="name-input" id="player-name" placeholder="Name for leaderboard" maxlength="28" value="${savedName}">
       <button class="submit-score-btn" onclick="submitScore()">Post Score</button>
     </div>
     <div id="rank-note" class="rank-note" style="display:none;"></div>
@@ -1354,8 +1355,9 @@ async function submitScore() {
     if (!res.ok) throw new Error('Server error');
     const data = await res.json();
 
-    // Mark submitted so they can't post again today
+    // Mark submitted so they can't post again today; remember the name for next time
     local.lbSubmitted = today;
+    local.playerName = name;
     saveLocal(local);
 
     const rankNote = document.getElementById('rank-note');
