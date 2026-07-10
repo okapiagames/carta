@@ -1098,15 +1098,21 @@ async function generatePostcard({ score, total, verdict, results, date, image })
   }
 
   // ── IMAGE ATTRIBUTION — legible bar ─────────────────────
+  const truncWord = (s, max) => {
+    if (s.length <= max) return s;
+    const cut = s.slice(0, max);
+    const sp = cut.lastIndexOf(' ');
+    return (sp > max * 0.6 ? cut.slice(0, sp) : cut).trim() + '…';
+  };
   const attrH = 44;
   cx.fillStyle = 'rgba(0,0,0,0.65)';
   cx.fillRect(imgX, H - attrH, imgW, attrH);
-  const attrCaption = image?.caption ? image.caption.slice(0, 60) + '  ·  ' : '';
+  const attrCaption = image?.caption ? truncWord(image.caption, 60) + '  ·  ' : '';
   const attrText = `${attrCaption}via Wikimedia Commons`;
   cx.fillStyle = 'rgba(255,255,255,0.92)';
   cx.font = '400 15px Inter, sans-serif';
   cx.textAlign = 'left';
-  cx.fillText(attrText.length > 80 ? attrText.slice(0, 78) + '…' : attrText, imgX + 14, H - 15);
+  cx.fillText(truncWord(attrText, 80), imgX + 14, H - 15);
 
   // ── GOLD VERTICAL RULE ──────────────────────────────────
   cx.strokeStyle = P.gold; cx.lineWidth = 1.5;
