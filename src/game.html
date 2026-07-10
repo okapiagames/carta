@@ -74,12 +74,15 @@ body{
   padding:3px; margin-bottom:20px; width:100%;max-width:680px;
 }
 .nav-tab{
-  flex:1;padding:11px 8px; border:none;border-radius:9px;
+  flex:1;padding:8px 4px; border:none;border-radius:9px;
   background:transparent;color:var(--text-muted);
-  font-family:var(--sans);font-size:15px;font-weight:600;
+  font-family:var(--sans);
   cursor:pointer;transition:all 0.18s;
   min-height:44px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
 }
+.nav-tab .nav-icon{font-size:16px;line-height:1;}
+.nav-tab .nav-label{font-size:12px;font-weight:600;line-height:1;white-space:nowrap;}
 .nav-tab.active{background:var(--surface3);color:var(--text);}
 .nav-tab:hover:not(.active){color:var(--text);background:rgba(var(--p-ink-rgb),0.04);}
 
@@ -335,10 +338,10 @@ body.lang-ja .explanation { font-family:'Noto Sans JP',sans-serif; line-height:1
 </header>
 
 <div class="nav-tabs">
-  <button class="nav-tab active" onclick="showTab('play')">🎯 Play</button>
-  <button class="nav-tab" onclick="showTab('leaderboard')">🏆 Today</button>
-  <button class="nav-tab" onclick="showTab('progress')">📈 Progress</button>
-  <button class="nav-tab" onclick="showTab('about')">✦ About</button>
+  <button class="nav-tab active" onclick="showTab('play')"><span class="nav-icon">🎯</span><span class="nav-label">Play</span></button>
+  <button class="nav-tab" onclick="showTab('leaderboard')"><span class="nav-icon">🏆</span><span class="nav-label">Today</span></button>
+  <button class="nav-tab" onclick="showTab('progress')"><span class="nav-icon">📈</span><span class="nav-label">Progress</span></button>
+  <button class="nav-tab" onclick="showTab('about')"><span class="nav-icon">✦</span><span class="nav-label">About</span></button>
 </div>
 
 <!-- ══════════ PLAY TAB ══════════ -->
@@ -681,12 +684,19 @@ function setLanguage(code) {
 
 function applyTranslations() {
   const l = t();
-  // Nav tabs
+  // Nav tabs — labels are "<icon> <text>"; icon and label render in separate rows
   const tabs = document.querySelectorAll('.nav-tab');
-  if (tabs[0]) tabs[0].textContent = l.play;
-  if (tabs[1]) tabs[1].textContent = l.today;
-  if (tabs[2]) tabs[2].textContent = l.progress;
-  if (tabs[3]) tabs[3].textContent = l.about;
+  const setTab = (btn, str) => {
+    if (!btn) return;
+    const [icon, ...rest] = str.split(' ');
+    const iconEl = btn.querySelector('.nav-icon'), labelEl = btn.querySelector('.nav-label');
+    if (iconEl) iconEl.textContent = icon;
+    if (labelEl) labelEl.textContent = rest.join(' ');
+  };
+  setTab(tabs[0], l.play);
+  setTab(tabs[1], l.today);
+  setTab(tabs[2], l.progress);
+  setTab(tabs[3], l.about);
   // Title screen
   const eyebrow = document.querySelector('.title-screen .eyebrow');
   if (eyebrow) eyebrow.textContent = l.eyebrow;
