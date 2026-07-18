@@ -1040,6 +1040,17 @@ async function showResults() {
       <button class="share-btn instagram" onclick="shareInstagram()">Instagram</button>
     </div>
 
+    <div style="text-align:center;margin:2px 0 12px;">
+      <a href="${INSTAGRAM_URL}" target="_blank" rel="noopener" onclick="trackInstagramFollow()" style="
+        display:inline-flex;align-items:center;gap:6px;
+        font-family:var(--sans);font-size:12px;font-weight:600;
+        color:var(--text-muted);text-decoration:none;letter-spacing:0.2px;
+        transition:color 0.2s;
+      " onmouseover="this.style.color='#e1306c'" onmouseout="this.style.color='var(--text-muted)'">
+        📷 Enjoyed today's quiz? Follow ${INSTAGRAM_HANDLE} for more
+      </a>
+    </div>
+
     <div style="display:flex;gap:8px;justify-content:center;margin-top:6px;flex-wrap:wrap;">
       <button class="share-btn secondary" onclick="goHome()">← Home</button>
       <button class="share-btn secondary" onclick="playAgain()">🔁 Play Again</button>
@@ -1416,6 +1427,13 @@ async function shareInstagram() {
   }
   downloadPostcard();
   toast('Image saved — share it to Instagram Stories!');
+}
+
+// Fire-and-forget click count — no identity captured, just a daily tally per
+// edition (Instagram doesn't tell us who actually follows from a link click).
+// sendBeacon fires without blocking the outbound navigation.
+function trackInstagramFollow() {
+  try { navigator.sendBeacon('/api/track-instagram'); } catch {}
 }
 
 // ══════════════════ SUBMIT SCORE (demo — no server) ══════════════════

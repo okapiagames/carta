@@ -829,6 +829,16 @@ async function getDailyQuestions(env, site) {
   }
 }
 
+// ── Track outbound Instagram follow-link clicks ───────────────────────────────
+// No identity is captured — Instagram doesn't expose who actually follows from a
+// link click, so this is a simple daily click count per edition, not per-player.
+async function trackInstagramClick(env, site) {
+  const key = siteKey(site, `instagram_clicks:${todayUTC()}`);
+  const current = parseInt(await env.TRIVIA_KV.get(key) || '0');
+  await env.TRIVIA_KV.put(key, String(current + 1), { expirationTtl: 400 * 86400 });
+  return json({ ok: true });
+}
+
 // ── Submit a score ────────────────────────────────────────────────────────────
 async function submitScore(env, site, body) {
   const { date, name, cats, results } = body;
@@ -1007,6 +1017,15 @@ export default {
         return submitScore(env, siteOf(request), body);
       } catch (e) {
         return json({ error: e.message }, 400);
+      }
+    }
+
+    // POST /api/track-instagram — fired when a player clicks the "Follow us" link
+    if (path === '/api/track-instagram' && request.method === 'POST') {
+      try {
+        return await trackInstagramClick(env, siteOf(request));
+      } catch (e) {
+        return json({ error: e.message }, 500);
       }
     }
 
