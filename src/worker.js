@@ -266,7 +266,12 @@ just scene-dressing wrapped around one:
 - Open with a genuinely surprising or delightful fact — a real "wait,
   WHAT" detail. If you stripped away the phrasing, there should still be
   an interesting fact underneath, not just an atmospheric sentence. Never
-  a bare "What is X" stem. Two or three sentences is plenty.
+  a bare "What is X" stem. One short sentence, two at most — three is a
+  last resort, not a target. Every word should earn its place; a reader
+  should get the hook in one pass, not need to re-read it.
+- Short, direct sentences over long ones with stacked clauses. If a
+  sentence needs a comma-separated aside to make sense, cut the aside or
+  split it into its own sentence.
 - Don't save every good detail for the explanation. If the article gives
   you two interesting angles, put the better one in the question itself
   and let the explanation go deeper on the same person/place/event — a
