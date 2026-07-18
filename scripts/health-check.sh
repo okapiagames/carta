@@ -11,9 +11,11 @@ echo "=== Carta Health Check — $(date -u +"%Y-%m-%d %H:%M UTC") ==="
 
 echo
 echo "--- Live site checks ---"
-for path in "/" "/og.png" "/api/leaderboard?date=$TODAY"; do
-  code=$(curl -s -o /dev/null -w "%{http_code}" "https://carta.okapiagames.com$path")
-  echo "GET $path -> HTTP $code"
+for site in carta.okapiagames.com cartain.okapiagames.com; do
+  for path in "/" "/og.png" "/api/leaderboard?date=$TODAY"; do
+    code=$(curl -s -o /dev/null -w "%{http_code}" "https://$site$path")
+    echo "GET https://$site$path -> HTTP $code"
+  done
 done
 
 echo
@@ -38,9 +40,24 @@ echo "--- R2 postcard bucket (carta-postcards) ---"
 npx wrangler r2 bucket info carta-postcards 2>/dev/null | grep -E "object_count|bucket_size"
 
 echo
-echo "--- Today's circuit-breaker usage ($TODAY) ---"
-COUNT=$(npx wrangler kv key get "player_count:$TODAY" --namespace-id="$KV_NAMESPACE_ID" --remote 2>/dev/null)
-echo "player_count:$TODAY = ${COUNT:-0} / 50000"
+echo "--- Today's usage ($TODAY) ---"
+echo "Note: player_count only increments on /api/questions cache misses (5min edge"
+echo "cache), so it's a lower-bound proxy for traffic, not a true visitor count."
+echo "Cloudflare Web Analytics dashboard has the real pageview/visitor numbers."
+GLOBAL_COUNT=$(npx wrangler kv key get "player_count:$TODAY" --namespace-id="$KV_NAMESPACE_ID" --remote 2>/dev/null)
+IN_COUNT=$(npx wrangler kv key get "in:player_count:$TODAY" --namespace-id="$KV_NAMESPACE_ID" --remote 2>/dev/null)
+echo "global player_count:$TODAY = ${GLOBAL_COUNT:-0} / 50000"
+echo "in     player_count:$TODAY = ${IN_COUNT:-0} / 50000"
+
+GLOBAL_SCORES=$(npx wrangler kv key get "scores:$TODAY" --namespace-id="$KV_NAMESPACE_ID" --remote 2>/dev/null | python3 -c "import json,sys; print(len(json.load(sys.stdin)))" 2>/dev/null)
+IN_SCORES=$(npx wrangler kv key get "in:scores:$TODAY" --namespace-id="$KV_NAMESPACE_ID" --remote 2>/dev/null | python3 -c "import json,sys; print(len(json.load(sys.stdin)))" 2>/dev/null)
+echo "global leaderboard posts today = ${GLOBAL_SCORES:-0}"
+echo "in     leaderboard posts today = ${IN_SCORES:-0}"
+
+GLOBAL_IG=$(npx wrangler kv key get "instagram_clicks:$TODAY" --namespace-id="$KV_NAMESPACE_ID" --remote 2>/dev/null)
+IN_IG=$(npx wrangler kv key get "in:instagram_clicks:$TODAY" --namespace-id="$KV_NAMESPACE_ID" --remote 2>/dev/null)
+echo "global Instagram follow-link clicks today = ${GLOBAL_IG:-0}"
+echo "in     Instagram follow-link clicks today = ${IN_IG:-0}"
 
 echo
 echo "--- Cloudflare secrets configured (names only) ---"

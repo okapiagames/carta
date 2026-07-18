@@ -962,10 +962,28 @@ export default {
           ? GAME_HTML
               .replace('<title>Carta · Okapia Games</title>', '<title>Carta.In · Okapia Games</title>')
               .replace('content="Carta · Okapia Games">', 'content="Carta.In · Okapia Games">')
+              .replace(/https:\/\/carta\.okapiagames\.com\//g, 'https://cartain.okapiagames.com/')
           : GAME_HTML;
         return new Response(html, {
           headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS },
         });
+      });
+    }
+
+    // GET /sitemap.xml — single-page app, so this just points crawlers at the homepage
+    // of whichever edition served the request (each edition is a distinct indexable site).
+    if (path === '/sitemap.xml' && request.method === 'GET') {
+      const origin = new URL(request.url).origin;
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${origin}/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>`;
+      return new Response(xml, {
+        headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=86400', ...CORS },
       });
     }
 
