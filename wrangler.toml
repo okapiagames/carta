@@ -25,3 +25,8 @@ bucket_name = "carta-postcards"
 
 [vars]
 ENVIRONMENT = "production"
+
+# Fires at UTC midnight (day rollover) to pre-generate and cache the India
+# edition's daily questions, so the first real visitor doesn't wait on generation.
+[triggers]
+crons = ["0 0 * * *"]

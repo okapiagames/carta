@@ -209,8 +209,8 @@ function pickDailyThread(date) {
   return DAILY_THREADS[idx];
 }
 
-// ── Question slots — 6 accessible (Q1-6, 3 History + 3 Geography, sourced from each
-// region's most widely-recognized categories), 4 challenging (Q7-10, 2 History + 2
+// ── Question slots — 8 accessible (Q1-8, 4 History + 4 Geography, sourced from each
+// region's most widely-recognized categories), 2 challenging (Q9-10, 1 History + 1
 // Geography, sourced from the full category depth exactly as before) ────────────────
 const TOPIC_SLOTS = [
   { label: 'History',   difficulty: 'accessible'  },
@@ -219,17 +219,19 @@ const TOPIC_SLOTS = [
   { label: 'Geography', difficulty: 'accessible'  },
   { label: 'History',   difficulty: 'accessible'  },
   { label: 'Geography', difficulty: 'accessible'  },
-  { label: 'History',   difficulty: 'challenging' },
-  { label: 'Geography', difficulty: 'challenging' },
+  { label: 'History',   difficulty: 'accessible'  },
+  { label: 'Geography', difficulty: 'accessible'  },
   { label: 'History',   difficulty: 'challenging' },
   { label: 'Geography', difficulty: 'challenging' },
 ];
 
 const PERSONA = `You are the Quizzard — a genuinely curious collector of the world's best
 "wait, WHAT?" facts, sharing them the way you'd tell a friend something
-you just found out yourself. Not a teacher lecturing from the front of a
-room — a fellow discoverer standing next to the reader, pointing at
-something interesting and saying "look at this."
+you just found out yourself, grinning as you do it. Not a teacher lecturing
+from the front of a room — a fellow discoverer standing next to the reader,
+bright-eyed, pointing at something interesting and saying "look at THIS."
+Your energy is warm, upbeat, a little delighted with the world — this is
+the best part of someone's day, not a pop quiz.
 
 Your questions span the full breadth of human civilisation — Chola dynasty,
 Roman Empire, Ibn Battuta, Indus Valley, all equal. You actively resist the
@@ -239,17 +241,19 @@ whoever history tends to leave out of the frame — when the material genuinely
 centers a queen, scholar, trader, or general who happens to be a woman, tell
 her story rather than reaching past her for a more familiar king.
 
-You state facts, not verdicts. Never editorialize, moralize, or signal how
-the reader should feel about a person, culture, or event — no "sadly,"
-"impressively," "shockingly," "of course," or similar throat-clearing
-judgment calls. Let the fact carry its own weight; your personality comes
-through in curiosity and phrasing, not opinion.
+Cheerful voice, neutral content — these aren't in tension. You state facts,
+not verdicts. Never editorialize, moralize, or signal how the reader should
+feel about a person, culture, or event — no "sadly," "impressively,"
+"shockingly," "of course," or similar throat-clearing judgment calls. Let
+the fact carry its own weight; your personality comes through in energy,
+curiosity, and phrasing — the brightness of *how* you tell it — never in
+opinion about *what* you're telling.
 
 Storytelling is one tool in the kit, not the whole voice — reach for a
 narrative setup on roughly half your questions, and let the rest be more
-direct: a clean, striking fact, plainly put. Either way, you're a careful
-weaver of facts: precise and economical, never padding a question with
-atmosphere it doesn't need.`;
+direct: a clean, striking fact, plainly put, delivered with the same grin.
+Either way, you're a careful weaver of facts: precise and economical, never
+padding a question with atmosphere it doesn't need.`;
 
 const QUESTION_CRAFT_RULES = `QUESTION CRAFT — the hook itself must be a fact worth knowing, not
 just scene-dressing wrapped around one:
@@ -1084,6 +1088,17 @@ export default {
     }
 
     return new Response('Not found', { status: 404 });
+  },
+
+  // Cron trigger (see wrangler.toml [triggers]) — fires at UTC midnight so the
+  // India edition's questions are generated and cached proactively instead of
+  // making the first visitor of the day eat the generation latency.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(
+      getDailyQuestions(env, 'in').catch(err =>
+        console.error('scheduled: failed to pre-generate India daily batch', err)
+      )
+    );
   },
 };
 
