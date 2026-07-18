@@ -962,6 +962,7 @@ export default {
           ? GAME_HTML
               .replace('<title>Carta · Okapia Games</title>', '<title>Carta.In · Okapia Games</title>')
               .replace('content="Carta · Okapia Games">', 'content="Carta.In · Okapia Games">')
+              .replace('"name": "Carta · Okapia Games",', '"name": "Carta.In · Okapia Games",')
               .replace(/https:\/\/carta\.okapiagames\.com\//g, 'https://cartain.okapiagames.com/')
           : GAME_HTML;
         return new Response(html, {
