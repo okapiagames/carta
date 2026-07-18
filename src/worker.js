@@ -205,7 +205,13 @@ const DAILY_THREADS = [
 ];
 
 function pickDailyThread(date) {
-  const idx = parseInt(date.replace(/-/g, ''), 10) % DAILY_THREADS.length;
+  // Rotate on a true day-count, not the date string's units digit — parsing
+  // "YYYYMMDD" as an integer and taking %10 previously just returned the last
+  // digit of the day-of-month, so the theme repeated on a fixed calendar-day
+  // cycle (e.g. the 1st/11th/21st of every month, forever) instead of rotating.
+  const [y, m, d] = date.split('-').map(Number);
+  const epochDay = Math.floor(Date.UTC(y, m - 1, d) / 86400000);
+  const idx = epochDay % DAILY_THREADS.length;
   return DAILY_THREADS[idx];
 }
 
