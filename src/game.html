@@ -46,22 +46,24 @@
    which correctly resolve locally since both live on this same body.theme-in rule)
    is what actually re-themes the page. Keep this block's semantic half in sync
    with :root's if that block's shape ever changes.
-   --p-gold is repointed to a vivid indigo (not an actual gold) rather than kept
+   --p-gold is repointed to Prussian blue (not an actual gold) rather than kept
    golden — --gold/--accent/--border-gold all derive from it, so this is what
    makes indigo the dominant accent (buttons, glow, spinner, badges) rather than
-   confining indigo to body text via --p-ink alone; the two stay visually distinct
-   (muted --p-ink for text vs. saturated --p-gold for accent) despite both being
-   indigo-family. Var names keep their global-site meaning ("gold") on purpose —
+   confining indigo to body text via --p-ink alone. Both primitives sit in the
+   same deep, desaturated navy family on purpose — true indigo dye reads closer
+   to Prussian blue than to a bright violet-blue, so --p-ink (text) and --p-gold
+   (accent) are two tones of the same Prussian blue rather than a muted/saturated
+   contrast pair. Var names keep their global-site meaning ("gold") on purpose —
    only the primitives block should ever need editing to re-theme.
    --p-teal / --p-green are extra primitives only this edition defines — .tag and
    .share-btn.teal reference them via var(--teal, var(--accent)) fallbacks, so the
    global site (where --teal is never defined) renders exactly as before. ── */
 body.theme-in {
   --p-ivory:#f1f1ef; --p-ivory-2:#e4e4e0;
-  --p-ink:#322d5e; --p-ink-soft:#5b5680;
-  --p-gold:#4f46e5; --p-gold-bright:#6d5ff2;
+  --p-ink:#14293d; --p-ink-soft:#4b6478;
+  --p-gold:#0b3d62; --p-gold-bright:#1d6693;
   --p-vermilion:#7a2035;
-  --p-ink-rgb:50,45,94; --p-gold-rgb:79,70,229; --p-vermilion-rgb:122,32,53;
+  --p-ink-rgb:20,41,61; --p-gold-rgb:11,61,98; --p-vermilion-rgb:122,32,53;
   --p-teal:#1f7a72; --p-teal-rgb:31,122,114;
   --p-green:#2f7a4f; --p-green-rgb:47,122,79;
 
@@ -1076,12 +1078,12 @@ async function generatePostcard({ score, total, verdict, results, date, image })
   // matching the body.theme-in CSS block's primitives.
   const P = IS_IN_SITE ? {
     paper:  '#f1f1ef',   // neutral gray-ivory ground
-    ink:    '#322d5e',   // deep indigo
-    gold:   '#4f46e5',   // vivid indigo accent (matches CSS --p-gold, not actually gold)
-    gMid:   '#3730a3',   // darker indigo
-    gDim:   '#8b80f0',   // lighter indigo for rules/details
-    mid:    '#5b5680',   // mid-tone indigo-grey text
-    dim:    '#8a86a8',   // secondary indigo-grey text
+    ink:    '#14293d',   // Prussian blue (deep, desaturated navy)
+    gold:   '#0b3d62',   // Prussian blue accent (matches CSS --p-gold, not actually gold)
+    gMid:   '#082a44',   // darker Prussian blue
+    gDim:   '#5090b8',   // lighter Prussian blue for rules/details
+    mid:    '#4b6478',   // mid-tone blue-grey text
+    dim:    '#7f93a3',   // secondary blue-grey text
     ok:     '#2f7a4f',   // green (correct)
     ng:     '#7a2035',   // maroon (wrong)
   } : {
