@@ -971,6 +971,14 @@ export default {
       });
     }
 
+    // GET /google1a22fa2849806850.html — Google Search Console HTML-file verification
+    // for carta.okapiagames.com. Content must be exactly this line per Google's spec.
+    if (path === '/google1a22fa2849806850.html' && request.method === 'GET') {
+      return new Response('google-site-verification: google1a22fa2849806850.html', {
+        headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS },
+      });
+    }
+
     // GET /sitemap.xml — single-page app, so this just points crawlers at the homepage
     // of whichever edition served the request (each edition is a distinct indexable site).
     if (path === '/sitemap.xml' && request.method === 'GET') {
