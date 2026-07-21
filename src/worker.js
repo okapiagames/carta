@@ -441,6 +441,36 @@ function hasAnswerLeak(q) {
   return hits >= Math.ceil(words.length * 0.6);
 }
 
+// ── Detect all-numeric answer sets ────────────────────────────────────────────
+// ANSWER_OPTION_RULES asks the model not to do this, but that's a request, not a
+// guarantee — live batches still land these (e.g. "Two/Three/Four/Five",
+// "32 percent/37 percent/41 percent/48 percent") often enough to need a real
+// filter, same pattern as hasAnswerLeak. Covers digit numerals, word-form
+// numerals ("Two"), percentages, and range phrasing ("Fewer than 50",
+// "Between 50 and 75") since none of those involve any real-world knowledge —
+// just picking a number, which defeats the point of a trivia question.
+const NUMBER_WORDS = new Set([
+  'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+  'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen',
+  'nineteen', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety',
+  'hundred', 'thousand', 'million', 'billion', 'percent',
+]);
+
+function isNumericOnlyOption(text) {
+  const body = (text || '').replace(/^[A-D]\.\s*/i, '').trim().toLowerCase();
+  const stripped = body
+    .replace(/\b(more|fewer|less|greater|between|over|under|about|around|approximately|and|to|than)\b/g, ' ')
+    .replace(/[%,]/g, ' ')
+    .trim();
+  if (!stripped) return false;
+  const tokens = stripped.split(/\s+/).filter(Boolean);
+  return tokens.every(t => /^\d+(\.\d+)?$/.test(t) || NUMBER_WORDS.has(t));
+}
+
+function hasNumericOnlyOptions(q) {
+  return q.options.every(isNumericOnlyOption);
+}
+
 // ── Layer 3: cross-day deduplication via KV `used_topics` ────────────────────
 async function getUsedTopics(env, site) {
   const topics = await env.TRIVIA_KV.get(siteKey(site, 'used_topics'), 'json');
@@ -704,7 +734,7 @@ async function generateDailyBatch(env, date, site) {
       const articles = await pickArticlesForSlots(env, usedTopics, allowedRegions);
       const prompt = buildBatchPrompt(articles, thread);
       const questions = await callHaikuBatch(prompt, env.ANTHROPIC_API_KEY);
-      const valid = questions.filter(isValidQuestion).filter(q => !hasAnswerLeak(q));
+      const valid = questions.filter(isValidQuestion).filter(q => !hasAnswerLeak(q)).filter(q => !hasNumericOnlyOptions(q));
 
       if (valid.length < TOPIC_SLOTS.length) {
         console.warn(`generateDailyBatch: attempt ${attempt + 1}/${MAX_ATTEMPTS} only produced ${valid.length}/${TOPIC_SLOTS.length} valid questions, retrying`);
