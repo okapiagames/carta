@@ -361,7 +361,16 @@ almost always mention the larger empire he belonged to; ask about that
 instead.) wiki_topic stays the original article regardless — only what the
 question asks about shifts. If nothing recognizable turns up in the summary
 at all, make the question as gentle and guessable as possible rather than
-reach for an obscure detail.`;
+reach for an obscure detail.
+
+Easy must never mean leading. Don't let the phrasing do the reasoning for
+the reader — if someone with zero knowledge of the actual subject could
+land on the correct option just by parsing the sentence (a technical
+definition that only one option satisfies, a description that names the
+answer in different words, a process of elimination baked into the hook
+itself), that's not an easy question, it's a decoded one. The ease has to
+come from the reader already recognizing the correct answer as famous —
+not from the question quietly solving itself.`;
 
 const CHALLENGING_DIFFICULTY = `Genuinely challenging — the opposite move from accessible mode. Where
 accessible mode rescues an obscure article by asking about the most
