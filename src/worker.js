@@ -54,26 +54,49 @@ const EXCLUDED_TITLE_PREFIXES = ['List of', 'Timeline of', 'Index of', 'Wikipedi
 // dynasty or a single obscure site. Accessible slots draw from broad categories only;
 // challenging slots draw from the full pool, exactly as before.
 const CATEGORY_POOL = [
-  // South Asia (~52)
-  { cat: 'Chola dynasty',                region: 'South Asia', type: 'History',   weight: 4 },
-  { cat: 'Maurya Empire',                region: 'South Asia', type: 'History',   weight: 4 },
-  { cat: 'Mughal Empire',                region: 'South Asia', type: 'History',   weight: 4, broad: true },
-  { cat: 'Gupta Empire',                 region: 'South Asia', type: 'History',   weight: 3 },
-  { cat: 'Vijayanagara Empire',          region: 'South Asia', type: 'History',   weight: 3 },
-  { cat: 'Indus Valley Civilisation',    region: 'South Asia', type: 'History',   weight: 3 },
-  { cat: 'Vedic period',                 region: 'South Asia', type: 'History',   weight: 2 },
-  { cat: 'Maratha Empire',               region: 'South Asia', type: 'History',   weight: 3 },
+  // South Asia (~84) — broad set deliberately wide (15 of 21 History, 8 of 14
+  // Geography) since accessible slots draw ONLY from broad categories, and the
+  // 'in' edition's whole pool is this block alone (SITE_REGIONS.in). A thin
+  // broad set here means the same 2 empires carrying every accessible History
+  // slot, every day, forever — see the "themes keep recurring" investigation.
+  // Narrow entries are kept for challenging-slot texture and to reach beyond
+  // India proper into the wider subcontinent (Pakistan, Bangladesh, Sri Lanka,
+  // Nepal), matching how MENA/Africa mix umbrella + flavour categories.
+  { cat: 'Ancient India',                region: 'South Asia', type: 'History',   weight: 2, broad: true },
+  { cat: 'Indus Valley Civilisation',    region: 'South Asia', type: 'History',   weight: 3, broad: true },
+  { cat: 'Vedic period',                 region: 'South Asia', type: 'History',   weight: 2, broad: true },
+  { cat: 'Maurya Empire',                region: 'South Asia', type: 'History',   weight: 4, broad: true },
+  { cat: 'Gupta Empire',                 region: 'South Asia', type: 'History',   weight: 3, broad: true },
+  { cat: 'Chola dynasty',                region: 'South Asia', type: 'History',   weight: 4, broad: true },
+  { cat: 'Vijayanagara Empire',          region: 'South Asia', type: 'History',   weight: 3, broad: true },
+  { cat: 'Delhi Sultanate',              region: 'South Asia', type: 'History',   weight: 3, broad: true },
+  { cat: 'Mughal Empire',                region: 'South Asia', type: 'History',   weight: 5, broad: true },
+  { cat: 'Maratha Empire',               region: 'South Asia', type: 'History',   weight: 3, broad: true },
+  { cat: 'British Raj',                  region: 'South Asia', type: 'History',   weight: 4, broad: true },
+  { cat: 'Indian independence movement', region: 'South Asia', type: 'History',   weight: 4, broad: true },
+  { cat: 'Partition of India',           region: 'South Asia', type: 'History',   weight: 2, broad: true },
+  { cat: 'History of Sri Lanka',         region: 'South Asia', type: 'History',   weight: 2, broad: true },
+  { cat: 'History of Pakistan',          region: 'South Asia', type: 'History',   weight: 2, broad: true },
   { cat: 'Sikh Empire',                  region: 'South Asia', type: 'History',   weight: 2 },
-  { cat: 'Indian independence movement', region: 'South Asia', type: 'History',   weight: 3, broad: true },
   { cat: 'Bengal Sultanate',             region: 'South Asia', type: 'History',   weight: 1 },
+  { cat: 'Chalukya dynasty',             region: 'South Asia', type: 'History',   weight: 1 },
+  { cat: 'Pallava dynasty',              region: 'South Asia', type: 'History',   weight: 1 },
+  { cat: 'History of Rajasthan',         region: 'South Asia', type: 'History',   weight: 2 },
+  { cat: 'History of Nepal',             region: 'South Asia', type: 'History',   weight: 1 },
   { cat: 'Geography of India',           region: 'South Asia', type: 'Geography', weight: 3, broad: true },
+  { cat: 'Geography of Pakistan',        region: 'South Asia', type: 'Geography', weight: 2, broad: true },
+  { cat: 'Geography of Bangladesh',      region: 'South Asia', type: 'Geography', weight: 2, broad: true },
+  { cat: 'Geography of Sri Lanka',       region: 'South Asia', type: 'Geography', weight: 2, broad: true },
+  { cat: 'Geography of Nepal',           region: 'South Asia', type: 'Geography', weight: 2, broad: true },
+  { cat: 'Geography of South Asia',      region: 'South Asia', type: 'Geography', weight: 2, broad: true },
+  { cat: 'World Heritage Sites in India',region: 'South Asia', type: 'Geography', weight: 4, broad: true },
+  { cat: 'Himalayas',                    region: 'South Asia', type: 'Geography', weight: 3, broad: true },
   { cat: 'Rivers of India',              region: 'South Asia', type: 'Geography', weight: 2 },
   { cat: 'Mountains of India',           region: 'South Asia', type: 'Geography', weight: 2 },
-  { cat: 'World Heritage Sites in India',region: 'South Asia', type: 'Geography', weight: 4, broad: true },
-  { cat: 'Geography of South Asia',      region: 'South Asia', type: 'Geography', weight: 2, broad: true },
-  { cat: 'Himalayas',                    region: 'South Asia', type: 'Geography', weight: 3, broad: true },
   { cat: 'Islands of India',             region: 'South Asia', type: 'Geography', weight: 3 },
   { cat: 'Western Ghats',                region: 'South Asia', type: 'Geography', weight: 1 },
+  { cat: 'Deccan Plateau',               region: 'South Asia', type: 'Geography', weight: 1 },
+  { cat: 'Thar Desert',                  region: 'South Asia', type: 'Geography', weight: 1 },
 
   // Africa (~47)
   { cat: 'Mali Empire',                  region: 'Africa', type: 'History',   weight: 4 },
