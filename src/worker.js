@@ -402,6 +402,15 @@ const EXAMPLE_QUESTIONS = [
   EXAMPLE_QUESTION_GEO_SCALE,
 ];
 
+// Named exports (alongside the default Worker export below) so scripts/eval-questions.js
+// can judge live output against the actual rubric text instead of a hand-copied duplicate
+// that would silently drift out of sync the next time one of these blocks is edited.
+export {
+  PERSONA, HISTORY_RULES, GEOGRAPHY_RULES, QUESTION_CRAFT_RULES, ANSWER_OPTION_RULES,
+  EXPLANATION_RULES, ACCURACY_RULES, CONTENT_TONE_RULES, ACCESSIBLE_DIFFICULTY,
+  CHALLENGING_DIFFICULTY, TOPIC_SLOTS,
+};
+
 function todayUTC() {
   return new Date().toISOString().split('T')[0];
 }

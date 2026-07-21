@@ -16,7 +16,10 @@ npm run deploy                       # build + wrangler deploy dist/worker.js
 npx wrangler secret put ANTHROPIC_API_KEY      # required to generate questions locally
 npx wrangler secret put GOOGLE_TRANSLATE_KEY   # optional, enables translated questions
 ./scripts/health-check.sh            # live-site + deployment + KV/R2 health snapshot
+ANTHROPIC_API_KEY=sk-... npm run eval -- --date=YYYY-MM-DD --site=in   # judge a cached day's questions against the real rubric (see below)
 ```
+
+**Question-quality eval (`scripts/eval-questions.js`)**, added after #28 made clear that adding a judge call to `/api/questions` itself would just reintroduce the same latency problem — this is a separate offline tool, not part of the request path. Run manually (or on your own schedule) against a batch that's already generated and cached: pulls `questions:YYYY-MM-DD` (or `in:questions:YYYY-MM-DD`) from KV via `wrangler kv key get`, or judges a local JSON file via `--file=path.json`. It imports `PERSONA`/`HISTORY_RULES`/`GEOGRAPHY_RULES`/etc. as named exports straight from `src/worker.js` (alongside the default Worker export) rather than duplicating the rubric text, specifically so the eval can't silently drift out of sync the next time one of those blocks is edited — see the three-different-word-lists bug this same file used to have. Needs `ANTHROPIC_API_KEY` in the environment; uses `claude-sonnet-5` as judge by default (override with `--model=`) since a judge benefits from being a stronger model than the `claude-haiku-4-5-20251001` generator it's checking.
 
 There is no test suite or linter configured — verify changes via `npm run dev` and manual checks against the endpoints below.
 
