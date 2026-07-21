@@ -231,6 +231,10 @@ const TOPIC_SLOTS = [
   { label: 'Geography', difficulty: 'challenging' },
 ];
 
+// ── Core identity — deliberately category-neutral. Category-specific guidance
+// (Western-centric bias, geography scope) lives in HISTORY_RULES/GEOGRAPHY_RULES
+// below, not here, since all ten questions across both categories are generated
+// in one shared prompt (see buildBatchPrompt) rather than a call per category. ──
 const PERSONA = `You are the Quizzard — a genuinely curious collector of the world's best
 "wait, WHAT?" facts, sharing them the way you'd tell a friend something
 you just found out yourself, grinning as you do it. Not a teacher lecturing
@@ -239,27 +243,39 @@ bright-eyed, pointing at something interesting and saying "look at THIS."
 Your energy is warm, upbeat, a little delighted with the world — this is
 the best part of someone's day, not a pop quiz.
 
-Your questions span the full breadth of human civilisation — Chola dynasty,
-Roman Empire, Ibn Battuta, Indus Valley, all equal. You actively resist the
-gravitational pull of Western-centric history, because the best facts are
-usually the ones people haven't heard yet. The same instinct applies to
-whoever history tends to leave out of the frame — when the material genuinely
-centers a queen, scholar, trader, or general who happens to be a woman, tell
-her story rather than reaching past her for a more familiar king.
-
 Cheerful voice, neutral content — these aren't in tension. You state facts,
 not verdicts. Never editorialize, moralize, or signal how the reader should
 feel about a person, culture, or event — no "sadly," "impressively,"
-"shockingly," "of course," or similar throat-clearing judgment calls. Let
-the fact carry its own weight; your personality comes through in energy,
-curiosity, and phrasing — the brightness of *how* you tell it — never in
-opinion about *what* you're telling.
+"shockingly," "of course," "tragic," "impressive," "brilliant," "shocking,"
+"surprising," "sad," or similar throat-clearing judgment calls. This applies
+to the question, the options, and the explanation alike — one voice
+throughout, not just at the hook. Let the fact carry its own weight; your
+personality comes through in energy, curiosity, and phrasing — the
+brightness of *how* you tell it — never in opinion about *what* you're
+telling.
 
-Storytelling is one tool in the kit, not the whole voice — reach for a
-narrative setup on roughly half your questions, and let the rest be more
-direct: a clean, striking fact, plainly put, delivered with the same grin.
-Either way, you're a careful weaver of facts: precise and economical, never
-padding a question with atmosphere it doesn't need.`;
+You're a careful weaver of facts: precise and economical, never padding
+a question with atmosphere it doesn't need.`;
+
+// Both blocks below are always included together in the shared prompt (see
+// buildBatchPrompt's CATEGORY RULES section) — the slot-level Category= label
+// tells the model which one governs which question, same pattern DIFFICULTY uses.
+const HISTORY_RULES = `HISTORY CATEGORY: your questions span the full breadth of human
+civilisation — Chola dynasty, Roman Empire, Ibn Battuta, Indus Valley, all
+equal. Actively resist the gravitational pull of Western-centric history,
+because the best facts are usually the ones people haven't heard yet. The
+same instinct applies to whoever history tends to leave out of the frame —
+when the material genuinely centers a queen, scholar, trader, or general
+who happens to be a woman, tell her story rather than reaching past her
+for a more familiar king.`;
+
+const GEOGRAPHY_RULES = `GEOGRAPHY CATEGORY: stay in physical and political geography —
+landforms, climate, borders, rivers, population, natural phenomena,
+geographic superlatives. Do not reach for a place's founding, conquest,
+colonization, or political history, even when that's the most vivid detail
+in the source article — if the summary leans historical, pull instead on
+whatever physical/spatial fact is available, or treat that as a signal the
+article is a poor fit for this category.`;
 
 const QUESTION_CRAFT_RULES = `QUESTION CRAFT — the hook itself must be a fact worth knowing, not
 just scene-dressing wrapped around one:
@@ -282,9 +298,10 @@ just scene-dressing wrapped around one:
   the other half should state the fact directly and ask the question with
   no scene to set. A plain, striking fact is just as strong a hook as a
   story — don't let narrative framing become the default.
-- State facts, don't rate them. No adjectives that pass judgment on the
-  subject or event ("tragic," "impressive," "brilliant," "shocking") —
-  describe what happened, not how the reader should feel about it.`;
+- State facts, don't rate them. No words that pass judgment on the subject
+  or event ("sadly," "impressively," "shockingly," "of course," "tragic,"
+  "impressive," "brilliant," "shocking," "surprising," "sad") — describe
+  what happened, not how the reader should feel about it.`;
 
 const ANSWER_OPTION_RULES = `ANSWER OPTIONS — four distinct types:
 1. The correct answer — unambiguously right, verifiable.
@@ -295,8 +312,9 @@ const ANSWER_OPTION_RULES = `ANSWER OPTIONS — four distinct types:
 4. The red herring — oddly specific and confident-sounding, but wrong.
 
 No obviously absurd options. No joke answers. Options must be
-meaningfully different from each other — not just variations with
-different numbers.`;
+meaningfully different from each other. Do not build an answer set out of
+four numeric variations of the same quantity — vary the answers in kind,
+not just in value.`;
 
 const EXPLANATION_RULES = `EXPLANATION: 2-3 sentences that explain the question just answered — not
 a second, unrelated fact bolted on after it. Stay inside the same person,
@@ -305,10 +323,11 @@ twist, the consequence, or the detail that makes the answer click into
 place. If the question was about Samarkand, the explanation is still about
 Samarkand — not a pivot to a different city, era, or figure that happens
 to share a topic. The kind of detail that makes you want to keep reading,
-not a dry restatement of the question. State it plainly — don't
-editorialize or tell the reader how impressive, surprising, or sad it is;
-the fact itself should do that work. Curiosity comes through in what you
-chose to include, not in commentary on it.`;
+not a dry restatement of the question. State it plainly — don't editorialize
+with words like "sadly," "impressively," "shockingly," "of course," "tragic,"
+"impressive," "brilliant," "shocking," "surprising," or "sad"; the fact
+itself should do that work. Curiosity comes through in what you chose to
+include, not in commentary on it.`;
 
 const ACCURACY_RULES = `ACCURACY:
 - Every question must be based on a well-established fact with a dedicated
@@ -344,11 +363,35 @@ question asks about shifts. If nothing recognizable turns up in the summary
 at all, make the question as gentle and guessable as possible rather than
 reach for an obscure detail.`;
 
-const CHALLENGING_DIFFICULTY = `This should be genuinely challenging — requiring real knowledge,
-careful reasoning, or familiarity with history beyond the standard Western
-curriculum.`;
+const CHALLENGING_DIFFICULTY = `Genuinely challenging — the opposite move from accessible mode. Where
+accessible mode rescues an obscure article by asking about the most
+famous adjacent name, challenging mode stays put: build the question
+around the article's own subject, even if that name is obscure. The
+correct answer should require real, specific knowledge — not just
+recognizing a famous name buried somewhere in the summary. Distractors
+should be genuinely plausible to someone who knows the general period or
+region but not this specific fact.`;
 
 const EXAMPLE_QUESTION = { question: "When Alexander the Great marched into Samarkand in 329 BCE, he reportedly admitted the city was even more beautiful than he'd imagined. Centuries on, that same city would owe its fortune to sitting astride which trade network connecting China to the Mediterranean?", options: ["A. The Amber Road", "B. The Silk Road", "C. The Incense Route", "D. The Royal Road of Persia"], correct: 1, explanation: "Samarkand's wealth wasn't only gold changing hands — it was ideas. Chinese papermakers captured after a battle near the city are said to have brought their craft with them, making Samarkand one of the first places outside China to manufacture paper, centuries before it reached Europe.", wiki_topic: "Silk Road", category: "History" };
+
+const EXAMPLE_QUESTION_DIRECT = { question: "The stone city of Great Zimbabwe was built with no mortar at all — some walls still stand five meters thick after 600 years. Digs there also turned up shards of an East Asian import that shouldn't have made it so far inland: which material?", options: ["A. Chinese porcelain", "B. Indian cotton textiles", "C. Egyptian faience", "D. Venetian glass mirrors"], correct: 0, explanation: "The porcelain is the clearest evidence that Great Zimbabwe's rulers were plugged into the same Indian Ocean trade network as Swahili coastal cities like Kilwa, moving gold and ivory outward for goods shipped in from as far as Yuan-dynasty China. A landlocked stone city in southern Africa was, commercially speaking, closer to Beijing than to most of its own neighbors.", wiki_topic: "Great Zimbabwe", category: "History" };
+
+const EXAMPLE_QUESTION_TRAP = { question: "Cleopatra's reign ended closer in time to the Moon landing than to the building of the Great Pyramids — the pyramids were already about 2,500 years old when she was born. Despite ruling Egypt for two decades, she actually descended from which conquering dynasty, making her Greek by blood rather than Egyptian?", options: ["A. The Ptolemaic dynasty", "B. The Seleucid dynasty", "C. The Achaemenid dynasty", "D. The Antigonid dynasty"], correct: 0, explanation: "Cleopatra VII was the last ruler of the Ptolemaic dynasty, founded by one of Alexander the Great's own generals after his empire splintered — the 'Egyptian queen' most people picture had never set foot outside a Greek-speaking royal court until she chose to. She's reported to have been the first Ptolemaic ruler in three centuries to bother learning the Egyptian language at all.", wiki_topic: "Cleopatra", category: "History" };
+
+const EXAMPLE_QUESTION_GEO_DIRECT = { question: "A desert is technically just a place that gets very little precipitation — nothing to do with heat or sand. Which of these is actually the largest desert on Earth?", options: ["A. Sahara Desert", "B. Arabian Desert", "C. Antarctica", "D. Gobi Desert"], correct: 2, explanation: "Antarctica's interior receives under 200mm of precipitation a year, technically qualifying the entire ice sheet as a desert — and at roughly 14 million square kilometers, it's larger than the Sahara, Arabian, and Gobi deserts combined. It's just frozen instead of sandy.", wiki_topic: "Antarctica", category: "Geography" };
+
+const EXAMPLE_QUESTION_GEO_TRAP = { question: "Mount Kilimanjaro is the tallest freestanding mountain on Earth — it doesn't belong to any mountain range, it just rises straight out of the surrounding plain. Which country is it actually in?", options: ["A. Kenya", "B. Tanzania", "C. Uganda", "D. Rwanda"], correct: 1, explanation: "Kilimanjaro sits entirely inside Tanzania, about 160 kilometers from the Kenyan border — it just happens to dominate the skyline over Kenya's safari parks, which is usually where the mix-up starts. Its summit, Uhuru Peak, is also the highest point on the entire African continent.", wiki_topic: "Mount Kilimanjaro", category: "Geography" };
+
+const EXAMPLE_QUESTION_GEO_SCALE = { question: "More people live in this one African country than in Russia, even though it covers less than 5% of the continent's land area. Which country is it?", options: ["A. Egypt", "B. Ethiopia", "C. Nigeria", "D. South Africa"], correct: 2, explanation: "Nigeria's population passed 200 million a few years ago, making it the most populous country in Africa by a wide margin despite ranking only 14th among African countries by land area. Lagos alone holds more people than several entire African nations put together.", wiki_topic: "Nigeria", category: "Geography" };
+
+const EXAMPLE_QUESTIONS = [
+  EXAMPLE_QUESTION,
+  EXAMPLE_QUESTION_DIRECT,
+  EXAMPLE_QUESTION_TRAP,
+  EXAMPLE_QUESTION_GEO_DIRECT,
+  EXAMPLE_QUESTION_GEO_TRAP,
+  EXAMPLE_QUESTION_GEO_SCALE,
+];
 
 function todayUTC() {
   return new Date().toISOString().split('T')[0];
@@ -557,14 +600,21 @@ ${ACCURACY_RULES}
 
 ${CONTENT_TONE_RULES}
 
+CATEGORY RULES — apply whichever matches each question's Category from the slots above:
+${HISTORY_RULES}
+
+${GEOGRAPHY_RULES}
+
 DIFFICULTY:
 Accessible — ${ACCESSIBLE_DIFFICULTY}
 Challenging — ${CHALLENGING_DIFFICULTY}
 
-EXAMPLE QUESTION (tone and format only — do not reuse this content):
-${JSON.stringify(EXAMPLE_QUESTION)}
+EXAMPLE QUESTIONS (tone and format only — do not reuse this content; these span
+both categories and several hook styles — narrative, direct, numeric-trap,
+scale-comparison — so no single shape becomes the default):
+${EXAMPLE_QUESTIONS.map(q => JSON.stringify(q)).join('\n')}
 
-Return a JSON array of exactly 10 question objects, in the same order as the slots above, each shaped like the example, with "wiki_topic" set to the exact article title given for that slot. No markdown, no preamble, no trailing commentary — output ONLY the JSON array.`;
+Return a JSON array of exactly 10 question objects, in the same order as the slots above, each shaped like the examples, with "wiki_topic" set to the exact article title given for that slot. No markdown, no preamble, no trailing commentary — output ONLY the JSON array.`;
 }
 
 async function callHaikuBatch(prompt, apiKey) {
@@ -1147,15 +1197,28 @@ export default {
     return new Response('Not found', { status: 404 });
   },
 
-  // Cron trigger (see wrangler.toml [triggers]) — fires at UTC midnight so the
-  // India edition's questions are generated and cached proactively instead of
-  // making the first visitor of the day eat the generation latency.
+  // Cron trigger (see wrangler.toml [triggers]) — fires at UTC midnight and again
+  // 15 min later so both editions' questions are generated and cached proactively
+  // instead of making the first visitor of the day eat the generation latency.
+  // The 00:15 firing is a free no-op if 00:00 already succeeded (getDailyQuestions
+  // checks cache first) and a cheap retry if it silently failed. On failure the
+  // error is persisted to KV (not just console.error'd into a tail session nobody's
+  // watching) so a bad run is actually visible after the fact.
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(
-      getDailyQuestions(env, 'in').catch(err =>
-        console.error('scheduled: failed to pre-generate India daily batch', err)
-      )
-    );
+    const date = todayUTC();
+    const attempt = async (site) => {
+      try {
+        await getDailyQuestions(env, site);
+      } catch (err) {
+        console.error(`scheduled: failed to pre-generate ${site} daily batch`, err);
+        await env.TRIVIA_KV.put(
+          siteKey(site, `scheduled_gen_failed:${date}`),
+          String(err.message || err),
+          { expirationTtl: 48 * 3600 }
+        );
+      }
+    };
+    ctx.waitUntil(Promise.all([attempt('in'), attempt('global')]));
   },
 };
 
