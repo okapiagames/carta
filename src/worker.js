@@ -411,8 +411,14 @@ export {
   CHALLENGING_DIFFICULTY, TOPIC_SLOTS,
 };
 
-function todayUTC() {
-  return new Date().toISOString().split('T')[0];
+// The India edition's "day" rolls over at IST midnight, not UTC midnight — IST is
+// UTC+5:30, so we shift the clock forward 330 minutes before reading off the date.
+// Everything date-scoped (question cache, locks, leaderboards, player counts) goes
+// through this so the two editions' days can't drift apart on any one KV key.
+function dateForSite(site) {
+  const d = new Date();
+  if (site === 'in') d.setUTCMinutes(d.getUTCMinutes() + 330);
+  return d.toISOString().split('T')[0];
 }
 
 function json(data, status = 200) {
@@ -842,7 +848,7 @@ async function translateQuestions(questions, apiKey) {
 }
 
 async function getDailyQuestions(env, site) {
-  const date = todayUTC();
+  const date = dateForSite(site);
   const cacheKey = siteKey(site, `questions:${date}`);
   const lockKey  = siteKey(site, `lock:${date}`);
 
@@ -901,7 +907,7 @@ async function getDailyQuestions(env, site) {
 // No identity is captured — Instagram doesn't expose who actually follows from a
 // link click, so this is a simple daily click count per edition, not per-player.
 async function trackInstagramClick(env, site) {
-  const key = siteKey(site, `instagram_clicks:${todayUTC()}`);
+  const key = siteKey(site, `instagram_clicks:${dateForSite(site)}`);
   const current = parseInt(await env.TRIVIA_KV.get(key) || '0');
   await env.TRIVIA_KV.put(key, String(current + 1), { expirationTtl: 400 * 86400 });
   return json({ ok: true });
@@ -1084,14 +1090,14 @@ export default {
           const site = siteOf(request);
           // Circuit breaker: counts Worker invocations (cache misses), not raw player count.
           // Tracked per-site so a spike on one edition can't trip the breaker for the other.
-          const countKey = siteKey(site, `player_count:${todayUTC()}`);
+          const countKey = siteKey(site, `player_count:${dateForSite(site)}`);
           const current = parseInt(await env.TRIVIA_KV.get(countKey) || '0');
           if (current >= 50000) {
             // Log once per day so it's visible in Cloudflare Worker Logs / `wrangler tail`,
             // without spamming a log line on every request for the rest of the day.
-            const alertKey = siteKey(site, `circuit_breaker_alerted:${todayUTC()}`);
+            const alertKey = siteKey(site, `circuit_breaker_alerted:${dateForSite(site)}`);
             if (!(await env.TRIVIA_KV.get(alertKey))) {
-              console.warn(`Circuit breaker tripped (${site}): ${current} cache-miss invocations today (${todayUTC()})`);
+              console.warn(`Circuit breaker tripped (${site}): ${current} cache-miss invocations today (${dateForSite(site)})`);
               ctx.waitUntil(env.TRIVIA_KV.put(alertKey, '1', { expirationTtl: 48 * 3600 }));
             }
             return json({ error: "Carta is having an incredibly popular day — we've hit today's limit. Come back tomorrow!" }, 503);
@@ -1139,8 +1145,9 @@ export default {
     // GET /api/leaderboard?date=YYYY-MM-DD — edge-cached 60 s
     if (path === '/api/leaderboard' && request.method === 'GET') {
       return edgeCached(request, ctx, 60, async () => {
-        const date = url.searchParams.get('date') || todayUTC();
-        return getLeaderboard(env, siteOf(request), date);
+        const site = siteOf(request);
+        const date = url.searchParams.get('date') || dateForSite(site);
+        return getLeaderboard(env, site, date);
       });
     }
 
@@ -1215,22 +1222,23 @@ export default {
     return new Response('Not found', { status: 404 });
   },
 
-  // Cron trigger (see wrangler.toml [triggers]) — fires at UTC midnight and again
-  // 15 min later so both editions' questions are generated and cached proactively
-  // instead of making the first visitor of the day eat the generation latency.
-  // The 00:15 firing is a free no-op if 00:00 already succeeded (getDailyQuestions
-  // checks cache first) and a cheap retry if it silently failed. On failure the
-  // error is persisted to KV (not just console.error'd into a tail session nobody's
-  // watching) so a bad run is actually visible after the fact.
+  // Cron trigger (see wrangler.toml [triggers]) — fires four times a day: 00:00/00:15 UTC
+  // (global edition's midnight + retry) and 18:30/18:45 UTC (India edition's IST midnight,
+  // UTC+5:30, + retry), so both editions' questions are generated and cached proactively
+  // instead of making the first visitor of the day eat the generation latency. Every firing
+  // attempts BOTH sites regardless of which schedule triggered it — getDailyQuestions is
+  // cache-first (via dateForSite), so an attempt for a site whose day already rolled over
+  // and got cached is a free no-op, and one for a site mid-retry is a cheap real retry. On
+  // failure the error is persisted to KV (not just console.error'd into a tail session
+  // nobody's watching) so a bad run is actually visible after the fact.
   async scheduled(event, env, ctx) {
-    const date = todayUTC();
     const attempt = async (site) => {
       try {
         await getDailyQuestions(env, site);
       } catch (err) {
         console.error(`scheduled: failed to pre-generate ${site} daily batch`, err);
         await env.TRIVIA_KV.put(
-          siteKey(site, `scheduled_gen_failed:${date}`),
+          siteKey(site, `scheduled_gen_failed:${dateForSite(site)}`),
           String(err.message || err),
           { expirationTtl: 48 * 3600 }
         );

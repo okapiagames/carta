@@ -26,9 +26,13 @@ bucket_name = "carta-postcards"
 [vars]
 ENVIRONMENT = "production"
 
-# Fires at UTC midnight (day rollover) and again 15 min later to pre-generate
-# and cache both editions' daily questions, so the first real visitor doesn't
-# wait on generation. The second firing is a free no-op if the first already
-# succeeded (getDailyQuestions checks cache first) and a cheap retry if not.
+# Fires four times a day to pre-generate and cache both editions' daily
+# questions, so the first real visitor never waits on generation:
+#   0 0 / 15 0   — global edition's UTC midnight, + a 15-min-later retry
+#   30 18 / 45 18 — India edition's IST midnight (IST = UTC+5:30, so IST
+#                   00:00 is UTC 18:30 the previous day), + retry
+# Every firing attempts both sites regardless of which schedule triggered it —
+# getDailyQuestions is cache-first, so a firing for a site whose day hasn't
+# rolled over yet is a free no-op.
 [triggers]
-crons = ["0 0 * * *", "15 0 * * *"]
+crons = ["0 0 * * *", "15 0 * * *", "30 18 * * *", "45 18 * * *"]

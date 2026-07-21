@@ -516,7 +516,15 @@ function buildDisputeUrl(q, wikiUrl, date) {
 function loadLocal() { try { return JSON.parse(localStorage.getItem(SK)) || defLocal(); } catch { return defLocal(); } }
 function saveLocal(d) { localStorage.setItem(SK, JSON.stringify(d)); }
 function defLocal() { return { sessions:[], streak:0, lastDate:null }; }
-function todayStr() { return new Date().toISOString().split('T')[0]; }
+// Mirrors dateForSite() in worker.js — the India edition's day rolls over at IST
+// midnight (UTC+5:30) server-side, so the client has to compute "today" the same
+// way or a returning player's local session lookup drifts out of sync with which
+// day's questions the server is actually serving.
+function todayStr() {
+  const d = new Date();
+  if (IS_IN_SITE) d.setUTCMinutes(d.getUTCMinutes() + 330);
+  return d.toISOString().split('T')[0];
+}
 
 // ══════════════════ I18N ══════════════════
 const LANGS = {
@@ -1006,7 +1014,10 @@ async function showResults() {
   const today = todayStr();
   const alreadyToday = local.sessions.some(s => s.date === today);
   if (!alreadyToday) {
-    const yest = new Date(); yest.setDate(yest.getDate()-1);
+    // Derived from `today` itself (not a fresh new Date()) so this can't disagree with
+    // todayStr()'s day boundary — a fresh local-time Date() here would silently drift
+    // out of sync for non-UTC browsers, and especially for the IST-shifted Carta.In edition.
+    const yest = new Date(today); yest.setUTCDate(yest.getUTCDate()-1);
     const yStr = yest.toISOString().split('T')[0];
     local.streak = local.lastDate===yStr ? (local.streak||0)+1 : 1;
     local.lastDate = today;
@@ -1663,7 +1674,8 @@ function renderProgress() {
   // Heatmap
   const dm={};ss.forEach(s=>{dm[s.date]=s.score;});
   let hm='';
-  for(let i=59;i>=0;i--){const dt=new Date();dt.setDate(dt.getDate()-i);const ds=dt.toISOString().split('T')[0];const sc=dm[ds];let l=0;if(sc!==undefined)l=sc>=9?4:sc>=7?3:sc>=5?2:1;hm+=`<div class="hm-cell" data-l="${l}" title="${ds}${sc!==undefined?' — '+sc+'/10':''}"></div>`;}
+  const hmAnchor=new Date(todayStr());
+  for(let i=59;i>=0;i--){const dt=new Date(hmAnchor);dt.setUTCDate(hmAnchor.getUTCDate()-i);const ds=dt.toISOString().split('T')[0];const sc=dm[ds];let l=0;if(sc!==undefined)l=sc>=9?4:sc>=7?3:sc>=5?2:1;hm+=`<div class="hm-cell" data-l="${l}" title="${ds}${sc!==undefined?' — '+sc+'/10':''}"></div>`;}
   document.getElementById('heatmap-wrap').innerHTML=hm;
   // History
   if(!ss.length){document.getElementById('history-wrap').innerHTML='<div style="text-align:center;padding:20px;font-family:var(--serif);font-style:italic;color:var(--text-muted)">No sessions yet</div>';return;}
