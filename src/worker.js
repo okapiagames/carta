@@ -54,14 +54,17 @@ const EXCLUDED_TITLE_PREFIXES = ['List of', 'Timeline of', 'Index of', 'Wikipedi
 // dynasty or a single obscure site. Accessible slots draw from broad categories only;
 // challenging slots draw from the full pool, exactly as before.
 const CATEGORY_POOL = [
-  // South Asia (~84) — broad set deliberately wide (15 of 21 History, 8 of 14
+  // South Asia (~100) — broad set deliberately wide (17 of 27 History, 10 of 18
   // Geography) since accessible slots draw ONLY from broad categories, and the
   // 'in' edition's whole pool is this block alone (SITE_REGIONS.in). A thin
   // broad set here means the same 2 empires carrying every accessible History
   // slot, every day, forever — see the "themes keep recurring" investigation.
   // Narrow entries are kept for challenging-slot texture and to reach beyond
   // India proper into the wider subcontinent (Pakistan, Bangladesh, Sri Lanka,
-  // Nepal), matching how MENA/Africa mix umbrella + flavour categories.
+  // Nepal), matching how MENA/Africa mix umbrella + flavour categories. The
+  // Sri Lanka/Nepal/Bangladesh-specific entries below came out of
+  // scripts/discover-categories.js against each country's History root —
+  // picked for being genuinely recognizable, not just "first result."
   { cat: 'Ancient India',                region: 'South Asia', type: 'History',   weight: 2, broad: true },
   { cat: 'Indus Valley Civilisation',    region: 'South Asia', type: 'History',   weight: 3, broad: true },
   { cat: 'Vedic period',                 region: 'South Asia', type: 'History',   weight: 2, broad: true },
@@ -77,12 +80,18 @@ const CATEGORY_POOL = [
   { cat: 'Partition of India',           region: 'South Asia', type: 'History',   weight: 2, broad: true },
   { cat: 'History of Sri Lanka',         region: 'South Asia', type: 'History',   weight: 2, broad: true },
   { cat: 'History of Pakistan',          region: 'South Asia', type: 'History',   weight: 2, broad: true },
+  { cat: 'Princely states of India',     region: 'South Asia', type: 'History',   weight: 2, broad: true },
+  { cat: 'Bangladesh Liberation War',    region: 'South Asia', type: 'History',   weight: 3, broad: true },
   { cat: 'Sikh Empire',                  region: 'South Asia', type: 'History',   weight: 2 },
   { cat: 'Bengal Sultanate',             region: 'South Asia', type: 'History',   weight: 1 },
   { cat: 'Chalukya dynasty',             region: 'South Asia', type: 'History',   weight: 1 },
   { cat: 'Pallava dynasty',              region: 'South Asia', type: 'History',   weight: 1 },
   { cat: 'History of Rajasthan',         region: 'South Asia', type: 'History',   weight: 2 },
+  { cat: 'Former monarchies of India',   region: 'South Asia', type: 'History',   weight: 1 },
   { cat: 'History of Nepal',             region: 'South Asia', type: 'History',   weight: 1 },
+  { cat: 'Rana dynasty',                 region: 'South Asia', type: 'History',   weight: 2 },
+  { cat: 'Shah dynasty',                 region: 'South Asia', type: 'History',   weight: 1 },
+  { cat: 'Kandyan period',               region: 'South Asia', type: 'History',   weight: 1 },
   { cat: 'Geography of India',           region: 'South Asia', type: 'Geography', weight: 3, broad: true },
   { cat: 'Geography of Pakistan',        region: 'South Asia', type: 'Geography', weight: 2, broad: true },
   { cat: 'Geography of Bangladesh',      region: 'South Asia', type: 'Geography', weight: 2, broad: true },
@@ -90,6 +99,8 @@ const CATEGORY_POOL = [
   { cat: 'Geography of Nepal',           region: 'South Asia', type: 'Geography', weight: 2, broad: true },
   { cat: 'Geography of South Asia',      region: 'South Asia', type: 'Geography', weight: 2, broad: true },
   { cat: 'World Heritage Sites in India',region: 'South Asia', type: 'Geography', weight: 4, broad: true },
+  { cat: 'World Heritage Sites in Pakistan', region: 'South Asia', type: 'Geography', weight: 2, broad: true },
+  { cat: 'World Heritage Sites in Nepal',region: 'South Asia', type: 'Geography', weight: 1, broad: true },
   { cat: 'Himalayas',                    region: 'South Asia', type: 'Geography', weight: 3, broad: true },
   { cat: 'Rivers of India',              region: 'South Asia', type: 'Geography', weight: 2 },
   { cat: 'Mountains of India',           region: 'South Asia', type: 'Geography', weight: 2 },
@@ -97,6 +108,8 @@ const CATEGORY_POOL = [
   { cat: 'Western Ghats',                region: 'South Asia', type: 'Geography', weight: 1 },
   { cat: 'Deccan Plateau',               region: 'South Asia', type: 'Geography', weight: 1 },
   { cat: 'Thar Desert',                  region: 'South Asia', type: 'Geography', weight: 1 },
+  { cat: 'World Heritage Sites in Bangladesh', region: 'South Asia', type: 'Geography', weight: 1 },
+  { cat: 'Protected areas of India',     region: 'South Asia', type: 'Geography', weight: 2 },
 
   // Africa (~47)
   { cat: 'Mali Empire',                  region: 'Africa', type: 'History',   weight: 4 },
